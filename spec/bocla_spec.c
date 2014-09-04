@@ -8,13 +8,13 @@
 #include "bocla.h"
 
 
-context "nada"
+context "bocla"
 {
-  describe "x()"
+  describe "fcla_get()"
   {
-    it "flips burgers"
+    it "gets"
     {
-      ensure(1 == 1);
+      ensure(0 == 1);
     }
   }
 }

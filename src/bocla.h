@@ -28,5 +28,21 @@
 #ifndef FLON_BOCLA_H
 #define FLON_BOCLA_H
 
+typedef struct fcla_response {
+  short status_code;
+  char **headers;
+  char *body;
+} fcla_response;
+
+fcla_response *fcla_request(char meth, char *uri, char **headers, char *body);
+
+fcla_response *fcla_get(char *uri);
+fcla_response *fcla_head(char *uri);
+//fcla_response *fcla_post(char *uri);
+//fcla_response *fcla_put(char *uri);
+//fcla_response *fcla_delete(char *uri);
+
+void fcla_response_free(fcla_response *r);
+
 #endif // FLON_BOCLA_H
 
