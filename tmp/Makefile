@@ -1,6 +1,5 @@
 
-CFLAGS=-I../src
-#CFLAGS=-I../src -g -Wall -O3 # helps Valgrind, but makes it see more problems
+CFLAGS=-I../src -g -Wall -O3
 LDLIBS=
 CC=c99
 VPATH=../src
@@ -14,13 +13,17 @@ endif
 s.c: ../spec/*_spec.c
 	$(RODZO) ../spec -o s.c
 
-s: $(NAME).o
+s: $(NAME).o $(FLIBS:=.o)
 
 spec: s
 	time ./s
 
 vspec: s
 	valgrind --leak-check=full -v ./s
+	#valgrind --read-var-info=yes --track-origins=yes --leak-check=full -v ./s
+
+dspec: s
+	gdb ./s
 
 clean:
 	rm -f *.o
@@ -28,5 +31,5 @@ clean:
 	rm -f *.c
 	rm -f s
 
-.PHONY: spec vspec clean
+.PHONY: spec vspec dspec clean
 
