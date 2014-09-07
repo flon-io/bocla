@@ -7,9 +7,20 @@
 
 #include "bocla.h"
 
+#include "../spec/server.h"
+
 
 context "bocla"
 {
+  before all
+  {
+    serve();
+  }
+  after all
+  {
+    unserve();
+  }
+
   describe "fcla_get()"
   {
     it "gets"
