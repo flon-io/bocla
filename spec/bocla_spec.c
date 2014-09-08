@@ -14,11 +14,11 @@ context "bocla"
 {
   before all
   {
-    serve();
+    server_start();
   }
   after all
   {
-    unserve();
+    server_stop();
   }
 
   describe "fcla_get()"
