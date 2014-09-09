@@ -25,7 +25,48 @@
 
 #define _POSIX_C_SOURCE 200809L
 
-//#include <stdlib.h>
+#include <stdlib.h>
+#include <curl/curl.h>
 
 #include "bocla.h"
+
+
+void fcla_response_free(fcla_response *r)
+{
+  if (r->headers != NULL) flu_list_free(r->headers);
+  if (r->body != NULL) free(r->body);
+  free(r);
+}
+
+fcla_response *fcla_request(
+  char meth, char *uri, flu_list *headers, char *body)
+{
+  fcla_response *res = calloc(1, sizeof(fcla_response));
+  res->status_code = -1;
+
+  CURL *curl;
+
+  curl = curl_easy_init();
+
+  if (curl == NULL) { res->body = "curl initialization failed"; return res; }
+
+  char buffer[512];
+
+  curl_easy_setopt(curl, CURLOPT_URL, uri);
+  curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, buffer);
+
+  CURLcode r = curl_easy_perform(curl);
+
+  if (r != CURLE_OK) { res->body = buffer; return res; }
+
+  res->status_code = 200;
+  // TODO: grab real status_code and body...
+
+  return res;
+}
+
+fcla_response *fcla_get(char *uri)
+{
+  return fcla_request('g', uri, NULL, NULL);
+}
 

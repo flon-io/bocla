@@ -4,6 +4,6 @@ require 'sinatra'
 
 get '/' do
 
-  'hello world'
+  "**hello world**\n"
 end
 

@@ -25,7 +25,11 @@ context "bocla"
   {
     it "gets"
     {
-      ensure(0 == 1);
+      fcla_response *res = fcla_get("http://127.0.0.1:4567");
+
+      ensure(res->status_code == 200);
+
+      fcla_response_free(res);
     }
   }
 }

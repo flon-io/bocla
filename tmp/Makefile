@@ -1,6 +1,6 @@
 
 CFLAGS=-I../src -g -Wall -O3
-LDLIBS=
+LDLIBS=/usr/lib/x86_64-linux-gnu/libcurl.so # :-(
 CC=c99
 VPATH=../src
 
