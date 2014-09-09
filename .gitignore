@@ -2,5 +2,5 @@
 tmp/*.o
 tmp/s
 tmp/s.c
-spec/server.o
+spec/server/server.o
 

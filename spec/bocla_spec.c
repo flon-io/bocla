@@ -7,7 +7,7 @@
 
 #include "bocla.h"
 
-#include "../spec/server.h"
+#include "../spec/server/server.h"
 
 
 context "bocla"
