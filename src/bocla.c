@@ -48,19 +48,25 @@ fcla_response *fcla_request(
 
   curl = curl_easy_init();
 
-  if (curl == NULL) { res->body = "curl initialization failed"; return res; }
+  if (curl == NULL) { res->body = "curl initialization failed"; goto _done; }
 
-  char buffer[512];
+  char *buffer = calloc(512, sizeof(char));
 
   curl_easy_setopt(curl, CURLOPT_URL, uri);
   curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, buffer);
+  curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5);
 
   CURLcode r = curl_easy_perform(curl);
 
-  if (r != CURLE_OK) { res->body = buffer; return res; }
+  if (r != CURLE_OK) { res->body = buffer; goto _done; }
 
   res->status_code = 200;
   // TODO: grab real status_code and body...
+
+_done:
+
+  if (curl != NULL) curl_easy_cleanup(curl);
+  if (res->status_code > -1) free(buffer);
 
   return res;
 }

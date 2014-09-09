@@ -10,7 +10,7 @@
 #include "../spec/server/server.h"
 
 
-context "bocla"
+describe "bocla"
 {
   before all
   {
@@ -21,6 +21,20 @@ context "bocla"
     server_stop();
   }
 
+  describe "fcla_ in general"
+  {
+    it "places the error message in res->body when it goes wrong"
+    {
+      fcla_response *res = fcla_get("http://www.example.com:4567");
+
+      ensure(res->status_code == -1);
+      //ensure(strncmp(res->body >== "Failed to connect to "));
+      ensure(strncmp(res->body, "Failed to connect to ", 21) == 0);
+
+      fcla_response_free(res);
+    }
+  }
+
   describe "fcla_get()"
   {
     it "gets"
@@ -28,6 +42,8 @@ context "bocla"
       fcla_response *res = fcla_get("http://127.0.0.1:4567");
 
       ensure(res->status_code == 200);
+      ensure(res->body === "**hello world**\n");
+      ensure(flu_list_get(res->headers, "Content-Length") === "16");
 
       fcla_response_free(res);
     }
