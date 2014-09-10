@@ -38,6 +38,22 @@ void fcla_response_free(fcla_response *r)
   free(r);
 }
 
+static size_t fcla_w(void *v, size_t s, size_t n, void *b)
+{
+  return flu_sbfwrite(b, v, s, n);
+}
+
+static short fcla_extract_status(char *head)
+{
+  return strtol(index(head, ' '), NULL, 10);
+}
+
+static flu_list *fcla_extract_headers(char *head)
+{
+  // TODO
+  return flu_list_malloc();
+}
+
 fcla_response *fcla_request(
   char meth, char *uri, flu_list *headers, char *body)
 {
@@ -57,13 +73,26 @@ fcla_response *fcla_request(
   curl_easy_setopt(curl, CURLOPT_URL, uri);
   curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, buffer);
   curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5);
+  curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fcla_w);
+
+  flu_sbuffer *bhead = flu_sbuffer_malloc();
+  flu_sbuffer *bbody = flu_sbuffer_malloc();
+
+  curl_easy_setopt(curl, CURLOPT_HEADERDATA, bhead);
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, bbody);
 
   CURLcode r = curl_easy_perform(curl);
 
   if (r != CURLE_OK) { res->body = buffer; goto _done; }
 
-  res->status_code = 200;
-  // TODO: grab real status_code and body...
+  char *shead = flu_sbuffer_to_string(bhead);
+  printf(">%s<\n", shead);
+
+  res->status_code = fcla_extract_status(shead);
+  res->headers = fcla_extract_headers(shead);
+
+  res->body = flu_sbuffer_to_string(bbody);
 
 _done:
 

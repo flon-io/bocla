@@ -162,6 +162,11 @@ size_t flu_sbwrite(flu_sbuffer *b, const char *s, size_t n)
   return fwrite(s, sizeof(char), n, b->stream);
 }
 
+size_t flu_sbfwrite(flu_sbuffer *b, const void *s, size_t l, size_t n)
+{
+  return fwrite(s, l, n, b->stream);
+}
+
 int flu_sbuffer_close(flu_sbuffer *b)
 {
   int r = 0;
