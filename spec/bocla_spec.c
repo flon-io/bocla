@@ -28,8 +28,7 @@ describe "bocla"
       fcla_response *res = fcla_get("http://www.example.com:4567");
 
       ensure(res->status_code == -1);
-      //ensure(strncmp(res->body >== "Failed to connect to "));
-      ensure(strncmp(res->body, "Failed to connect to ", 21) == 0);
+      ensure(res->body ^== "Failed to connect to ");
 
       fcla_response_free(res);
     }
