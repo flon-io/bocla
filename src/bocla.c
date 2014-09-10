@@ -44,13 +44,15 @@ fcla_response *fcla_request(
   fcla_response *res = calloc(1, sizeof(fcla_response));
   res->status_code = -1;
 
+  char *buffer = NULL;
+
   CURL *curl;
 
   curl = curl_easy_init();
 
   if (curl == NULL) { res->body = "curl initialization failed"; goto _done; }
 
-  char *buffer = calloc(512, sizeof(char));
+  buffer = calloc(512, sizeof(char));
 
   curl_easy_setopt(curl, CURLOPT_URL, uri);
   curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, buffer);
@@ -66,7 +68,7 @@ fcla_response *fcla_request(
 _done:
 
   if (curl != NULL) curl_easy_cleanup(curl);
-  if (res->status_code > -1) free(buffer);
+  if (res->status_code > -1 && buffer != NULL) free(buffer);
 
   return res;
 }

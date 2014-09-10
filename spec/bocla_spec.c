@@ -52,7 +52,7 @@ describe "bocla"
       fcla_response *res = fcla_get("http://127.0.0.1:4567/nada");
 
       ensure(res->status_code == 404);
-      ensure(res->body ~== "Sinatra doesn&rsquo;t know this ditty\.");
+      ensure(res->body ~== "Sinatra doesn&rsquo;t know this ditty\\.");
 
       fcla_response_free(res);
     }
