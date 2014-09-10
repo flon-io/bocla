@@ -48,10 +48,32 @@ static short fcla_extract_status(char *head)
   return strtol(index(head, ' '), NULL, 10);
 }
 
+static fcla_crlf(char *s)
+{
+  char *s0 = index(s, '\r');
+  if (s0[1] == '\n' && s0[2] != '\0') return s0 + 2;
+  return NULL;
+}
+
 static flu_list *fcla_extract_headers(char *head)
 {
-  // TODO
-  return flu_list_malloc();
+  // TODO: double check on multiline headers !
+
+  flu_list *l = flu_list_malloc();
+  char *s = head;
+  while (1)
+  {
+    s = fcla_crlf(s);
+    if (s == NULL || s[0] == '\r') break;
+    char *c = index(s, ':');
+    char *r = index(c + 1, '\r');
+    char *k = strndup(s, c - s);
+    char *v = strndup(c + 1, r - c - 1);
+    flu_list_set(l, k, flu_strtrim(v));
+    free(k);
+    free(v);
+  }
+  return l;
 }
 
 fcla_response *fcla_request(
@@ -87,7 +109,7 @@ fcla_response *fcla_request(
   if (r != CURLE_OK) { res->body = buffer; goto _done; }
 
   char *shead = flu_sbuffer_to_string(bhead);
-  printf(">%s<\n", shead);
+  //printf(">%s<\n", shead);
 
   res->status_code = fcla_extract_status(shead);
   res->headers = fcla_extract_headers(shead);
