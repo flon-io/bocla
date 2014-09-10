@@ -33,7 +33,8 @@
 
 void fcla_response_free(fcla_response *r)
 {
-  if (r->headers != NULL) flu_list_free(r->headers);
+  //if (r->headers != NULL) flu_list_free(r->headers); // not enough
+  if (r->headers != NULL) flu_list_and_items_free(r->headers, free);
   if (r->body != NULL) free(r->body);
   free(r);
 }
@@ -83,6 +84,8 @@ fcla_response *fcla_request(
   res->status_code = -1;
 
   char *buffer = NULL;
+  flu_sbuffer *bhead = NULL;
+  flu_sbuffer *bbody = NULL;
 
   CURL *curl;
 
@@ -98,9 +101,9 @@ fcla_response *fcla_request(
   curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fcla_w);
 
-  flu_sbuffer *bhead = flu_sbuffer_malloc();
-  flu_sbuffer *bbody = flu_sbuffer_malloc();
-
+  bhead = flu_sbuffer_malloc();
+  bbody = flu_sbuffer_malloc();
+  //
   curl_easy_setopt(curl, CURLOPT_HEADERDATA, bhead);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, bbody);
 
@@ -109,17 +112,23 @@ fcla_response *fcla_request(
   if (r != CURLE_OK) { res->body = buffer; goto _done; }
 
   char *shead = flu_sbuffer_to_string(bhead);
+  bhead = NULL;
   //printf(">%s<\n", shead);
 
   res->status_code = fcla_extract_status(shead);
   res->headers = fcla_extract_headers(shead);
 
+  free(shead);
+
   res->body = flu_sbuffer_to_string(bbody);
+  bbody = NULL;
 
 _done:
 
   if (curl != NULL) curl_easy_cleanup(curl);
   if (res->status_code > -1 && buffer != NULL) free(buffer);
+  if (bhead != NULL) flu_sbuffer_free(bhead);
+  if (bbody != NULL) flu_sbuffer_free(bbody);
 
   return res;
 }
