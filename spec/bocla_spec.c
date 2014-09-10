@@ -36,13 +36,23 @@ describe "bocla"
 
   describe "fcla_get()"
   {
-    it "gets"
+    it "gets 200"
     {
       fcla_response *res = fcla_get("http://127.0.0.1:4567");
 
       ensure(res->status_code == 200);
       ensure(res->body === "**hello world**\n");
       ensure(flu_list_get(res->headers, "Content-Length") === "16");
+
+      fcla_response_free(res);
+    }
+
+    it "gets 404"
+    {
+      fcla_response *res = fcla_get("http://127.0.0.1:4567/nada");
+
+      ensure(res->status_code == 404);
+      ensure(res->body ~== "Sinatra doesn&rsquo;t know this ditty\.");
 
       fcla_response_free(res);
     }
