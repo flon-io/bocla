@@ -26,6 +26,7 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include <stdlib.h>
+#include <string.h>
 #include <curl/curl.h>
 
 #include "bocla.h"
@@ -46,12 +47,12 @@ static size_t fcla_w(void *v, size_t s, size_t n, void *b)
 
 static short fcla_extract_status(char *head)
 {
-  return strtol(index(head, ' '), NULL, 10);
+  return strtol(strchr(head, ' '), NULL, 10);
 }
 
-static fcla_crlf(char *s)
+static char *fcla_crlf(char *s)
 {
-  char *s0 = index(s, '\r');
+  char *s0 = strchr(s, '\r');
   if (s0[1] == '\n' && s0[2] != '\0') return s0 + 2;
   return NULL;
 }
@@ -66,8 +67,8 @@ static flu_list *fcla_extract_headers(char *head)
   {
     s = fcla_crlf(s);
     if (s == NULL || s[0] == '\r') break;
-    char *c = index(s, ':');
-    char *r = index(c + 1, '\r');
+    char *c = strchr(s, ':');
+    char *r = strchr(c + 1, '\r');
     char *k = strndup(s, c - s);
     char *v = strndup(c + 1, r - c - 1);
     flu_list_set(l, k, flu_strtrim(v));
@@ -95,7 +96,13 @@ fcla_response *fcla_request(
 
   buffer = calloc(512, sizeof(char));
 
+  //if (meth == 'h') curl_easy_setopt(curl, CURLOPT_HEAD, 1);
+  //else if (meth == 'p') curl_easy_setopt(curl, CURLOPT_POST, 1);
+  //else if (meth == 'u') curl_easy_setopt(curl, CURLOPT_PUT, 1);
+  //else if (meth == 'd') curl_easy_setopt(curl, CURLOPT_DELETE, 1);
+
   curl_easy_setopt(curl, CURLOPT_URL, uri);
+
   curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, buffer);
   curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5);
   curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
@@ -111,17 +118,15 @@ fcla_response *fcla_request(
 
   if (r != CURLE_OK) { res->body = buffer; goto _done; }
 
-  char *shead = flu_sbuffer_to_string(bhead);
-  bhead = NULL;
-  //printf(">%s<\n", shead);
+  char *shead = flu_sbuffer_to_string(bhead); bhead = NULL;
+  printf("-->%s<--\n", shead);
 
   res->status_code = fcla_extract_status(shead);
   res->headers = fcla_extract_headers(shead);
 
   free(shead);
 
-  res->body = flu_sbuffer_to_string(bbody);
-  bbody = NULL;
+  res->body = flu_sbuffer_to_string(bbody); bbody = NULL;
 
 _done:
 
@@ -136,5 +141,10 @@ _done:
 fcla_response *fcla_get(char *uri)
 {
   return fcla_request('g', uri, NULL, NULL);
+}
+
+fcla_response *fcla_head(char *uri)
+{
+  return fcla_request('h', uri, NULL, NULL);
 }
 
