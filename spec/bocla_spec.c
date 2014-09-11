@@ -21,16 +21,23 @@ describe "bocla"
     server_stop();
   }
 
+  before each
+  {
+    fcla_response *res = NULL;
+  }
+  after each
+  {
+    if (res != NULL) fcla_response_free(res);
+  }
+
   describe "fcla_ in general"
   {
     it "places the error message in res->body when it goes wrong"
     {
-      fcla_response *res = fcla_get("http://www.example.com:4567");
+      res = fcla_get("http://www.example.com:4567");
 
       ensure(res->status_code == -1);
       ensure(res->body ^== "Failed to connect to ");
-
-      fcla_response_free(res);
     }
   }
 
@@ -38,23 +45,19 @@ describe "bocla"
   {
     it "gets 200"
     {
-      fcla_response *res = fcla_get("http://127.0.0.1:4567");
+      res = fcla_get("http://127.0.0.1:4567");
 
       ensure(res->status_code == 200);
       ensure(res->body === "**hello world**\n");
       ensure(flu_list_get(res->headers, "Content-Length") === "16");
-
-      fcla_response_free(res);
     }
 
     it "gets 404"
     {
-      fcla_response *res = fcla_get("http://127.0.0.1:4567/nada");
+      res = fcla_get("http://127.0.0.1:4567/nada");
 
       ensure(res->status_code == 404);
       ensure(res->body ~== "Sinatra doesn&rsquo;t know this ditty\\.");
-
-      fcla_response_free(res);
     }
   }
 }
