@@ -60,5 +60,17 @@ describe "bocla"
       ensure(res->body ~== "Sinatra doesn&rsquo;t know this ditty\\.");
     }
   }
+
+  describe "fcla_head()"
+  {
+    it "heads 200"
+    {
+      res = fcla_head("http://127.0.0.1:4567");
+
+      ensure(res->status_code == 200);
+      ensure(res->body === "");
+      ensure(flu_list_get(res->headers, "Content-Length") === "16");
+    }
+  }
 }
 

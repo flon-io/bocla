@@ -96,7 +96,7 @@ fcla_response *fcla_request(
 
   buffer = calloc(512, sizeof(char));
 
-  //if (meth == 'h') curl_easy_setopt(curl, CURLOPT_HEAD, 1);
+  if (meth == 'h') curl_easy_setopt(curl, CURLOPT_NOBODY, 1);
   //else if (meth == 'p') curl_easy_setopt(curl, CURLOPT_POST, 1);
   //else if (meth == 'u') curl_easy_setopt(curl, CURLOPT_PUT, 1);
   //else if (meth == 'd') curl_easy_setopt(curl, CURLOPT_DELETE, 1);
@@ -119,7 +119,7 @@ fcla_response *fcla_request(
   if (r != CURLE_OK) { res->body = buffer; goto _done; }
 
   char *shead = flu_sbuffer_to_string(bhead); bhead = NULL;
-  printf("-->%s<--\n", shead);
+  //printf("\n-->\n%s<--\n", shead);
 
   res->status_code = fcla_extract_status(shead);
   res->headers = fcla_extract_headers(shead);
