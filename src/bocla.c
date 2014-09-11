@@ -99,7 +99,7 @@ fcla_response *fcla_request(
   if (meth == 'h') curl_easy_setopt(curl, CURLOPT_NOBODY, 1);
   //else if (meth == 'p') curl_easy_setopt(curl, CURLOPT_POST, 1);
   //else if (meth == 'u') curl_easy_setopt(curl, CURLOPT_PUT, 1);
-  //else if (meth == 'd') curl_easy_setopt(curl, CURLOPT_DELETE, 1);
+  else if (meth == 'd') curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
 
   curl_easy_setopt(curl, CURLOPT_URL, uri);
 
@@ -146,5 +146,10 @@ fcla_response *fcla_get(char *uri)
 fcla_response *fcla_head(char *uri)
 {
   return fcla_request('h', uri, NULL, NULL);
+}
+
+fcla_response *fcla_delete(char *uri)
+{
+  return fcla_request('d', uri, NULL, NULL);
 }
 

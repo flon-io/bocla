@@ -51,7 +51,7 @@ fcla_response *fcla_get(char *uri);
 fcla_response *fcla_head(char *uri);
 //fcla_response *fcla_post(char *uri);
 //fcla_response *fcla_put(char *uri);
-//fcla_response *fcla_delete(char *uri);
+fcla_response *fcla_delete(char *uri);
 
 #endif // FLON_BOCLA_H
 

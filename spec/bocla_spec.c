@@ -72,5 +72,17 @@ describe "bocla"
       ensure(flu_list_get(res->headers, "Content-Length") === "16");
     }
   }
+
+  describe "fcla_delete()"
+  {
+    it "deletes 200"
+    {
+      res = fcla_delete("http://127.0.0.1:4567/d");
+
+      ensure(res->status_code == 200);
+      ensure(res->body === "deleted.");
+      ensure(flu_list_get(res->headers, "Content-Length") === "8");
+    }
+  }
 }
 
