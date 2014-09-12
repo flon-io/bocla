@@ -38,20 +38,12 @@ typedef struct fcla_response {
 
 void fcla_response_free(fcla_response *r);
 
-// g GET
-// h HEAD
-// p POST
-// u PUT
-// d DELETE
-
-fcla_response *fcla_request(
-  char meth, char *uri, flu_list *headers, char *body);
-
 fcla_response *fcla_get(char *uri);
 fcla_response *fcla_head(char *uri);
+fcla_response *fcla_delete(char *uri);
+
 //fcla_response *fcla_post(char *uri);
 //fcla_response *fcla_put(char *uri);
-fcla_response *fcla_delete(char *uri);
 
 #endif // FLON_BOCLA_H
 

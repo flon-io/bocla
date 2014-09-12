@@ -30,15 +30,12 @@ describe "bocla"
     if (res != NULL) fcla_response_free(res);
   }
 
-  describe "fcla_ in general"
+  it "places the error message in res->body when it goes wrong"
   {
-    it "places the error message in res->body when it goes wrong"
-    {
-      res = fcla_get("http://www.example.com:4567");
+    res = fcla_get("http://www.example.com:4567");
 
-      ensure(res->status_code == -1);
-      ensure(res->body ^== "Failed to connect to ");
-    }
+    ensure(res->status_code == -1);
+    ensure(res->body ^== "Failed to connect to ");
   }
 
   describe "fcla_get()"

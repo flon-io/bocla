@@ -78,7 +78,7 @@ static flu_list *fcla_extract_headers(char *head)
   return l;
 }
 
-fcla_response *fcla_request(
+static fcla_response *fcla_request(
   char meth, char *uri, flu_list *headers, char *body)
 {
   fcla_response *res = calloc(1, sizeof(fcla_response));
