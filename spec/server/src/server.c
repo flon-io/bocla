@@ -34,15 +34,10 @@
 
 void grey_logger(char level, const char *pref, const char *msg)
 {
-  char *now = fgaj_now();
   char *lstr = fgaj_level_to_string(level);
 
-  printf(
-    "[1;30m%s %s %d/%d %5s %s %s[0;0m\n",
-    now, fgaj_conf_get()->host, getppid(), getpid(), lstr, pref, msg
-  );
+  printf("[1;30m%21s %s %s[0;0m\n", lstr, pref, msg);
 
-  free(now);
   fgaj_level_string_free(lstr);
 }
 
