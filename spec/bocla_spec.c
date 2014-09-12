@@ -64,6 +64,8 @@ describe "bocla"
 
       ensure(res->status_code == 200);
 
+      ensure(res->body != NULL);
+
       //printf("\n%s\n", res->body);
       flu_list *d = fcla_extract_headers(res->body);
 
@@ -81,6 +83,9 @@ describe "bocla"
       flu_list *hs = flu_d("user-agent", "flon bocla 0.x", NULL);
       //
       res = fcla_get_h("http://127.0.0.1:4567/mirror", hs);
+
+      ensure(res != NULL);
+      ensure(res->body != NULL);
 
       //printf("\n%s\n", res->body);
       flu_list *d = fcla_extract_headers(res->body);

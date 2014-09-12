@@ -53,7 +53,7 @@ static short fcla_extract_status(char *head)
 static char *fcla_crlf(char *s)
 {
   char *s0 = strchr(s, '\r');
-  if (s0[1] == '\n' && s0[2] != '\0') return s0 + 2;
+  if (s0 != NULL && s0[1] == '\n' && s0[2] != '\0') return s0 + 2;
   return NULL;
 }
 
