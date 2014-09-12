@@ -38,6 +38,8 @@ typedef struct fcla_response {
 
 void fcla_response_free(fcla_response *r);
 
+fcla_response *fcla_get_h(char *uri, flu_list *headers);
+
 fcla_response *fcla_get(char *uri);
 fcla_response *fcla_head(char *uri);
 fcla_response *fcla_delete(char *uri);

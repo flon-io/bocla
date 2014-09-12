@@ -90,6 +90,7 @@ static fcla_response *fcla_request(
   flu_sbuffer *bbody = NULL;
 
   CURL *curl;
+  struct curl_slist *cheaders = NULL;
 
   curl = curl_easy_init();
 
@@ -115,6 +116,21 @@ static fcla_response *fcla_request(
   curl_easy_setopt(curl, CURLOPT_HEADERDATA, bhead);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, bbody);
 
+  if (headers != NULL)
+  {
+    flu_list *tl = flu_list_dtrim(headers);
+    for (flu_node *n = tl->first; n != NULL; n = n->next)
+    {
+      char *s = flu_sprintf("%s: %s", n->key, (char *)n->item);
+      cheaders = curl_slist_append(cheaders, s);
+      free(s);
+    }
+    flu_list_free(tl);
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, cheaders);
+  }
+
+  //curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
+
   CURLcode r = curl_easy_perform(curl);
 
   if (r != CURLE_OK) { res->body = buffer; goto _done; }
@@ -135,13 +151,19 @@ _done:
   if (res->status_code > -1 && buffer != NULL) free(buffer);
   if (bhead != NULL) flu_sbuffer_free(bhead);
   if (bbody != NULL) flu_sbuffer_free(bbody);
+  if (cheaders != NULL) curl_slist_free_all(cheaders);
 
   return res;
 }
 
+fcla_response *fcla_get_h(char *uri, flu_list *headers)
+{
+  return fcla_request('g', uri, headers, NULL);
+}
+
 fcla_response *fcla_get(char *uri)
 {
-  return fcla_request('g', uri, NULL, NULL);
+  return fcla_get_h(uri, NULL);
 }
 
 fcla_response *fcla_head(char *uri)

@@ -74,6 +74,26 @@ describe "bocla"
     }
   }
 
+  describe "fcla_get_h()"
+  {
+    it "gets 200"
+    {
+      flu_list *hs = flu_d("user-agent", "flon bocla 0.x", NULL);
+      //
+      res = fcla_get_h("http://127.0.0.1:4567/mirror", hs);
+
+      //printf("\n%s\n", res->body);
+      flu_list *d = fcla_extract_headers(res->body);
+
+      ensure(flu_list_get(d, "HTTP_USER_AGENT") === "flon bocla 0.x");
+
+      flu_list_and_items_free(d, free);
+
+      flu_list_free(hs);
+        // the values are not on the heap, no need to use _and_items_free()
+    }
+  }
+
   describe "fcla_head()"
   {
     it "heads 200"
