@@ -57,6 +57,21 @@ describe "bocla"
       ensure(res->status_code == 404);
       ensure(res->body ~== "Sinatra doesn&rsquo;t know this ditty\\.");
     }
+
+    it "gets /mirror"
+    {
+      res = fcla_get("http://127.0.0.1:4567/mirror");
+
+      ensure(res->status_code == 200);
+
+      //printf("\n%s\n", res->body);
+      flu_list *d = fcla_extract_headers(res->body);
+
+      ensure(flu_list_get(d, "PATH_INFO") === "/mirror");
+      ensure(flu_list_get(d, "REQUEST_METHOD") === "GET");
+
+      flu_list_and_items_free(d, free);
+    }
   }
 
   describe "fcla_head()"

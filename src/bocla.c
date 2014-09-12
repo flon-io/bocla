@@ -57,10 +57,8 @@ static char *fcla_crlf(char *s)
   return NULL;
 }
 
-static flu_list *fcla_extract_headers(char *head)
+flu_list *fcla_extract_headers(char *head)
 {
-  // TODO: double check on multiline headers !
-
   flu_list *l = flu_list_malloc();
   char *s = head;
   while (1)
