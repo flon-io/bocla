@@ -35,7 +35,8 @@ describe "bocla"
     res = fcla_get("http://www.example.com:4567");
 
     ensure(res->status_code == -1);
-    ensure(res->body ^== "Failed to connect to ");
+    //ensure(res->body ^== "Failed to connect to ");
+    ensure(res->body === "connect() timed out!");
   }
 
   describe "fcla_get()"

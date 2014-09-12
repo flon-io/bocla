@@ -79,7 +79,10 @@ static flu_list *fcla_extract_headers(char *head)
 }
 
 static fcla_response *fcla_request(
-  char meth, char *uri, flu_list *headers, char *body)
+  char meth,
+  char *uri,
+  flu_list *headers,
+  char *body)
 {
   fcla_response *res = calloc(1, sizeof(fcla_response));
   res->status_code = -1;
