@@ -25,21 +25,27 @@
 
 #define _POSIX_C_SOURCE 200809L
 
-#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
 
+#include "gajeta.h"
 #include "shervin.h"
 
 
-//void htime_handler(shv_request *req, shv_response *res, void *params)
-//{
-//  time_t tt; time(&tt);
-//  struct tm *tm; tm = gmtime(&tt);
-//  char *dt = asctime(tm);
-//
-//  res->status_code = 200;
-//  res->content_type = "text/plain; charset=utf-8";
-//  res->body = strdup(dt);
-//}
+void grey_logger(char level, const char *pref, const char *msg)
+{
+  char *now = fgaj_now();
+  char *lstr = fgaj_level_to_string(level);
+
+  printf(
+    "[1;30m%s %s %d/%d %5s %s %s[0;0m\n",
+    now, fgaj_conf_get()->host, getppid(), getpid(), lstr, pref, msg
+  );
+
+  free(now);
+  fgaj_level_string_free(lstr);
+}
+
 static void hello_handler(shv_request *req, shv_response *res, void *params)
 {
   res->status_code = 200;
@@ -49,6 +55,8 @@ static void hello_handler(shv_request *req, shv_response *res, void *params)
 
 int main()
 {
+  fgaj_conf_get()->logger = grey_logger;
+
   shv_route **routes = (shv_route *[]){
     &(shv_route){ shv_any_guard, hello_handler, NULL },
     NULL // optional since we have a "shv_any_guard" above
