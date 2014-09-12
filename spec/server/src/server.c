@@ -25,33 +25,35 @@
 
 #define _POSIX_C_SOURCE 200809L
 
-#include <time.h>
 #include <string.h>
 
 #include "shervin.h"
 
 
-/*
- * Respond with 200 and the time.
- */
-void htime_handler(shv_request *req, shv_response *res, void *params)
+//void htime_handler(shv_request *req, shv_response *res, void *params)
+//{
+//  time_t tt; time(&tt);
+//  struct tm *tm; tm = gmtime(&tt);
+//  char *dt = asctime(tm);
+//
+//  res->status_code = 200;
+//  res->content_type = "text/plain; charset=utf-8";
+//  res->body = strdup(dt);
+//}
+static void hello_handler(shv_request *req, shv_response *res, void *params)
 {
-  time_t tt; time(&tt);
-  struct tm *tm; tm = gmtime(&tt);
-  char *dt = asctime(tm);
-
   res->status_code = 200;
   res->content_type = "text/plain; charset=utf-8";
-  res->body = strdup(dt);
+  res->body = "**hello world**\n";
 }
 
 int main()
 {
   shv_route **routes = (shv_route *[]){
-    &(shv_route){ shv_any_guard, htime_handler, NULL },
+    &(shv_route){ shv_any_guard, hello_handler, NULL },
     NULL // optional since we have a "shv_any_guard" above
   };
 
-  shv_serve(4001, routes);
+  shv_serve(4567, routes);
 }
 

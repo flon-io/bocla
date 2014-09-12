@@ -16,7 +16,7 @@ s.c: ../spec/*_spec.c
 s: $(NAME).o $(FLIBS:=.o) ../spec/server/servman.o
 
 spec: s
-	$(MAKE) -C ../spec/server build
+	$(MAKE) -C ../spec/server clean build
 	time ./s
 
 vspec: s
