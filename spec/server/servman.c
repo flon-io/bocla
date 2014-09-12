@@ -27,7 +27,16 @@ void server_start()
 
   if (server_pid == 0)
   {
-    execl("../spec/server/tmp/server", "", NULL);
+    char *v = getenv("VALSERV");
+
+    if (v != NULL && (strcmp(v, "1") == 0 || strcmp(v, "true") == 0))
+      execl(
+        "/usr/bin/valgrind", "",
+        "../spec/server/tmp/server", "", NULL);
+    else
+      execl(
+        "../spec/server/tmp/server", "",
+        NULL);
 
     perror("execl failed"); exit(1);
   }
