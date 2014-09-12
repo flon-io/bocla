@@ -36,7 +36,7 @@ void grey_logger(char level, const char *pref, const char *msg)
 {
   char *lstr = fgaj_level_to_string(level);
 
-  printf("[1;30m%21s %s %s[0;0m\n", lstr, pref, msg);
+  printf("[1;30m%19s %-38s %s[0;0m\n", lstr, pref, msg);
 
   fgaj_level_string_free(lstr);
 }
