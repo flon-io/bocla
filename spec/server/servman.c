@@ -13,7 +13,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-#include "server.h"
+#include "servman.h"
 
 
 pid_t server_pid = -1;
@@ -27,8 +27,7 @@ void server_start()
 
   if (server_pid == 0)
   {
-    chdir("../spec/server/");
-    execl("/usr/bin/env", "", "bundle", "exec", "ruby", "server.rb", NULL);
+    execl("../spec/server/tmp/server", "", NULL);
 
     perror("execl failed"); exit(1);
   }

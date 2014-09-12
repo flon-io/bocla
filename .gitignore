@@ -2,5 +2,9 @@
 tmp/*.o
 tmp/s
 tmp/s.c
-spec/server/server.o
+spec/server/*.o
+spec/server/src/*.h
+spec/server/src/*.c
+spec/server/tmp/server
+spec/server/tmp/*.o
 

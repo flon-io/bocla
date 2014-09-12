@@ -13,9 +13,10 @@ endif
 s.c: ../spec/*_spec.c
 	$(RODZO) ../spec -o s.c
 
-s: $(NAME).o $(FLIBS:=.o) ../spec/server/server.o
+s: $(NAME).o $(FLIBS:=.o) ../spec/server/servman.o
 
 spec: s
+	$(MAKE) -C ../spec/server build
 	time ./s
 
 vspec: s
