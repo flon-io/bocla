@@ -248,6 +248,17 @@ void *flu_list_get(flu_list *l, const char *key);
  */
 flu_list *flu_list_dtrim(flu_list *l);
 
+/* Given a va_list builds a flu_list dict. Is used underneath by flu_d().
+ */
+flu_list *flu_vd(va_list ap);
+
+/* Given a succession, key/value, key/value, builds a flu_list dict.
+ *
+ * Warning, it must be stopped with a NULL key, else it'll loop until
+ * it has made a dict of all the memory from v0...
+ */
+flu_list *flu_d(char *k0, void *v0, ...);
+
 
 //
 // escape

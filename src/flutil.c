@@ -403,6 +403,32 @@ flu_list *flu_list_dtrim(flu_list *l)
   return r;
 }
 
+flu_list *flu_vd(va_list ap)
+{
+  flu_list *d = flu_list_malloc();
+
+  while (1)
+  {
+    char *k = va_arg(ap, char *);
+    if (k == NULL) break;
+    void *v = va_arg(ap, void *);
+    flu_list_set(d, k, v);
+  }
+
+  return d;
+}
+
+flu_list *flu_d(char *k0, void *v0, ...)
+{
+  va_list ap; va_start(ap, v0);
+  flu_list *d = flu_vd(ap);
+  va_end(ap);
+
+  flu_list_set(d, k0, v0);
+
+  return d;
+}
+
 
 //
 // escape
