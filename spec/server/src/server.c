@@ -51,6 +51,7 @@ static void hello_handler(shv_request *req, shv_response *res, void *params)
 int main()
 {
   fgaj_conf_get()->logger = grey_logger;
+  //fgaj_conf_get()->level = 10;
 
   shv_route **routes = (shv_route *[]){
     &(shv_route){ shv_any_guard, hello_handler, NULL },
