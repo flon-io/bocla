@@ -45,7 +45,7 @@ static void hello_handler(shv_request *req, shv_response *res, void *params)
 {
   res->status_code = 200;
   res->content_type = "text/plain; charset=utf-8";
-  res->body = "**hello world**\n";
+  res->body = strdup("**hello world**\n");
 }
 
 int main()
