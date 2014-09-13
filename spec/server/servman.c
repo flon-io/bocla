@@ -42,7 +42,7 @@ void server_start()
   }
   else
   {
-    sleep(2); // wait for server to get ready
+    sleep(1); // wait for server to get ready
   }
 }
 
