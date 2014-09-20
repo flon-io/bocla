@@ -35,19 +35,21 @@ describe "bocla"
     res = fcla_get("http://www.example.com:4567");
 
     ensure(res->status_code == -1);
-    //ensure(res->body ^== "Failed to connect to ");
-    ensure(res->body === "connect() timed out!");
+
+    ensure(
+      strcmp(res->body, "connect() timed out!") == 0 ||
+      strncmp(res->body, "Failed to connect to ", 21) == 0);
   }
 
   describe "fcla_get()"
   {
     it "gets 200"
     {
-      res = fcla_get("http://127.0.0.1:4567");
+      res = fcla_get("http://127.0.0.1:4567/hello");
 
       ensure(res->status_code == 200);
       ensure(res->body === "**hello world**\n");
-      ensure(flu_list_get(res->headers, "Content-Length") === "16");
+      ensure(flu_list_get(res->headers, "content-length") === "16");
     }
 
     it "gets 404"
@@ -55,7 +57,7 @@ describe "bocla"
       res = fcla_get("http://127.0.0.1:4567/nada");
 
       ensure(res->status_code == 404);
-      ensure(res->body ~== "Sinatra doesn&rsquo;t know this ditty\\.");
+      ensure(res->body === "");
     }
 
     it "gets /mirror"
@@ -103,11 +105,11 @@ describe "bocla"
   {
     it "heads 200"
     {
-      res = fcla_head("http://127.0.0.1:4567");
+      res = fcla_head("http://127.0.0.1:4567/hello");
 
       ensure(res->status_code == 200);
       ensure(res->body === "");
-      ensure(flu_list_get(res->headers, "Content-Length") === "16");
+      ensure(flu_list_get(res->headers, "content-length") === "16");
     }
   }
 
