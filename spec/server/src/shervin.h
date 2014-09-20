@@ -28,6 +28,9 @@
 #ifndef FLON_SHERVIN_H
 #define FLON_SHERVIN_H
 
+#include "flutil.h"
+
+
 #define SHV_VERSION "1.0.0"
 
 // request
@@ -36,40 +39,53 @@ typedef struct shv_request {
   long long startMs; // microseconds since the Epoch
   char method;
   char *uri;
-  char **headers;
+  flu_dict *uri_d;
+  flu_dict *headers;
   char *body;
   short status_code; // 4xx code set by shervin, 200 else
 } shv_request;
-
-char *shv_request_header(shv_request *r, char *header_name);
 
 // response
 
 typedef struct shv_response {
   short status_code; // 200, 404, 500, ...
-  char *content_type;
-  char *body;
+  flu_dict *headers;
+  flu_list *body;
 } shv_response;
 
 // route
 
-typedef int shv_guard(shv_request *req, void *params);
-typedef void shv_handler(shv_request *req, shv_response *res, void *params);
+typedef int shv_handler(
+  shv_request *req, flu_dict *rod, shv_response *res, flu_dict *params);
 
 typedef struct shv_route {
-  shv_guard *guard;
+  shv_handler *guard;
   shv_handler *handler;
-  void *params;
+  flu_dict *params;
 } shv_route;
+
+shv_route *shv_route_malloc(shv_handler *guard, shv_handler *handler, ...);
+#define shv_r(...) shv_route_malloc(__VA_ARGS__)
+
+shv_route *shv_rp(char *path, shv_handler *handler, ...);
+
 
 // guards
 
-int shv_any_guard(shv_request *req, void *params);
-int shv_path_guard(shv_request *req, void *params);
+/* Merely a marker function, corresponding handlers are called as filters.
+ */
+int shv_filter_guard(
+  shv_request *req, flu_dict *rod, shv_response *res, flu_dict *params);
+
+int shv_any_guard(
+  shv_request *req, flu_dict *rod, shv_response *res, flu_dict *params);
+int shv_path_guard(
+  shv_request *req, flu_dict *rod, shv_response *res, flu_dict *params);
 
 // handlers
 
-void shv_dir_handler(shv_request *req, shv_response *res, void *params);
+int shv_dir_handler(
+  shv_request *req, flu_dict *guard, shv_response *res, flu_dict *params);
 
 // serving
 

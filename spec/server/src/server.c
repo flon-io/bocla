@@ -41,11 +41,14 @@ void grey_logger(char level, const char *pref, const char *msg)
   fgaj_level_string_free(lstr);
 }
 
-static void hello_handler(shv_request *req, shv_response *res, void *params)
+static int hello_handler(
+  shv_request *req, flu_dict *rod, shv_response *res, flu_dict *params)
 {
   res->status_code = 200;
-  res->content_type = "text/plain; charset=utf-8";
-  res->body = strdup("**hello world**\n");
+  //flu_list_set(res->headers, "content-type", "text/plain; charset=utf-8");
+  flu_list_add(res->body, strdup("**hello world**\n"));
+
+  return 1;
 }
 
 int main()
@@ -54,8 +57,8 @@ int main()
   //fgaj_conf_get()->level = 10;
 
   shv_route **routes = (shv_route *[]){
-    &(shv_route){ shv_any_guard, hello_handler, NULL },
-    NULL // optional since we have a "shv_any_guard" above
+    shv_rp("GET /hello", hello_handler, NULL),
+    NULL // end route
   };
 
   shv_serve(4567, routes);

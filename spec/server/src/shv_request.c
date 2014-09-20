@@ -25,24 +25,21 @@
 
 #define _POSIX_C_SOURCE 200809L
 
+#include <ctype.h>
 #include <stdlib.h>
-#include <string.h>
-#include <strings.h>
 
 #include "flutil.h"
 #include "aabro.h"
-#include "shervin.h"
 #include "shv_protected.h"
 
-#include "gajeta.h"
+//#include "gajeta.h"
 
 
 abr_parser *request_parser = NULL;
 
-void shv_init_parser()
-{
-  if (request_parser != NULL) return;
 
+static void shv_init_parser()
+{
   abr_parser *sp = abr_string(" ");
   abr_parser *crlf = abr_string("\r\n");
 
@@ -59,7 +56,7 @@ void shv_init_parser()
   abr_parser *method =
     abr_n_alt(
       "method",
-      abr_rex("GET|POST|PUT|DELETE|HEAD|OPTIONS|TRACE|CONNECT"),
+      abr_rex("GET|POST|PUT|DELETE|HEAD|OPTIONS|TRACE|CONNECT|LINK|UNLINK"),
       abr_name("extension_method", token),
       NULL);
   abr_parser *request_uri =
@@ -87,9 +84,7 @@ void shv_init_parser()
   request_parser =
     abr_seq(
       request_line,
-      abr_rep(
-        abr_seq(message_header, crlf, NULL),
-        0, -1),
+      abr_seq(message_header, crlf, NULL), abr_q("*"),
       crlf,
       //abr_rep(message_body, 0, 1),
       NULL);
@@ -103,7 +98,7 @@ shv_request *shv_parse_request(char *s)
   //
   // parse
 
-  shv_init_parser();
+  if (request_parser == NULL) shv_init_parser();
 
   abr_tree *r = abr_parse(s, 0, request_parser);
   //abr_tree *r = abr_parse_f(s, 0, request_parser, ABR_F_ALL);
@@ -132,26 +127,36 @@ shv_request *shv_parse_request(char *s)
 
   // version
 
-  // reject when not 1.0 or 1.1?
+    // reject when not 1.0 or 1.1?
 
   // headers
 
   flu_list *hs = abr_tree_list_named(r, "message_header");
 
-  size_t i = 0;
-  req->headers = calloc((2 * hs->size) + 1, sizeof(char *));
+  req->headers = flu_list_malloc();
   for (flu_node *h = hs->first; h != NULL; h = h->next)
   {
     abr_tree *th = (abr_tree *)h->item;
     abr_tree *tk = abr_tree_lookup(th, "field_name");
     abr_tree *tv = abr_tree_lookup(th, "field_value");
-    req->headers[i++] = abr_tree_string(s, tk);
+
+    char *sk = abr_tree_string(s, tk);
+    for (char *kk = sk; *kk; ++kk) *kk = tolower(*kk);
+
     char *sv = abr_tree_string(s, tv);
-    req->headers[i++] = flu_strtrim(sv);
+
+    flu_list_set(req->headers, sk, flu_strtrim(sv));
+
+    free(sk);
     free(sv);
   }
 
   flu_list_free(hs);
+
+  req->uri_d =
+    shv_parse_host_and_path(
+      flu_list_get(req->headers, "host"),
+      req->uri);
 
   //
   // over
@@ -161,33 +166,18 @@ shv_request *shv_parse_request(char *s)
   return req;
 }
 
-char *shv_request_header(shv_request *r, char *header_name)
-{
-  for (size_t i = 0; r->headers[i] != NULL; i = i + 2)
-  {
-    if (strcasecmp(r->headers[i], header_name) == 0) return r->headers[i + 1];
-  }
-  return NULL;
-}
-
 ssize_t shv_request_content_length(shv_request *r)
 {
-  char *cl = shv_request_header(r, "content-length");
+  char *cl = flu_list_get(r->headers, "content-length");
 
   return (cl == NULL) ? -1 : atol(cl);
 }
 
 void shv_request_free(shv_request *r)
 {
-  if (r->headers != NULL)
-  {
-    for (size_t i = 0; r->headers[i] != NULL; ++i) free(r->headers[i]);
-    free(r->headers);
-  }
-  if (r->uri != NULL)
-  {
-    free(r->uri);
-  }
+  if (r->uri != NULL) free(r->uri);
+  if (r->uri_d != NULL) flu_list_free_all(r->uri_d);
+  if (r->headers != NULL) flu_list_free_all(r->headers);
   free(r);
 }
 

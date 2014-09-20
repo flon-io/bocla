@@ -43,13 +43,18 @@ ssize_t shv_request_content_length(shv_request *r);
 char shv_method_to_char(char *s);
 char *shv_char_to_method(char c);
 
+void shv_handle(struct ev_loop *l, struct ev_io *eio);
+
+flu_dict *shv_parse_uri(char *uri);
+flu_dict *shv_parse_host_and_path(char *host, char *path);
+
 //
 // response
 
 shv_response *shv_response_malloc(short status_code);
 void shv_response_free(shv_response *r);
 
-void shv_respond(short status_code, struct ev_loop *l, struct ev_io *eio);
+void shv_respond(struct ev_loop *l, struct ev_io *eio);
 
 
 //

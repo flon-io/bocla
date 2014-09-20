@@ -120,31 +120,65 @@ static void shv_handle_cb(struct ev_loop *l, struct ev_io *eio, int revents)
     {
       fgaj_d("c%p r%i couldn't parse request head", eio, con->rqount);
 
-      shv_respond(-1, l, eio); return;
+      con->res = shv_response_malloc(con->req->status_code);
+      shv_respond(l, eio);
+      return;
     }
   }
 
-  //printf("con->req content-length %zd\n", shv_request_content_length(con->req));
+  //printf(
+  //  "con->req content-length %zd\n", shv_request_content_length(con->req));
 
   if (
     (con->req->method == 'p' || con->req->method == 'u') &&
     (con->blen < shv_request_content_length(con->req))
   ) return; // request body not yet complete
 
-  for (i = 0; ; ++i)
+  shv_handle(l, eio);
+}
+
+void shv_handle(struct ev_loop *l, struct ev_io *eio)
+{
+  shv_con *con = (shv_con *)eio->data;
+
+  con->res = shv_response_malloc(404);
+
+  flu_dict *rod = flu_list_malloc();
+  int filtering = 0;
+  int guarded = 0;
+  int handled = 0;
+
+  for (size_t i = 0; ; ++i)
   {
     shv_route *route = con->routes[i];
 
-    if (route == NULL) break;
-    if (route->guard(con->req, route->params) != 1) continue;
+    if (route == NULL) break; // end reached
 
-    con->res = shv_response_malloc(-1);
-    route->handler(con->req, con->res, route->params);
-    shv_respond(-1, l, eio);
-    return;
+    if (route->guard == shv_filter_guard) filtering = 1;
+
+    if (handled && !filtering) continue;
+
+    if (route->guard && route->guard != shv_filter_guard)
+    {
+      filtering = 0;
+
+      if (handled) continue;
+
+      guarded = route->guard(con->req, rod, con->res, route->params);
+    }
+
+    if ( ! (filtering || guarded)) continue;
+
+    if (route->handler)
+    {
+      int h = route->handler(con->req, rod, con->res, route->params);
+      if (filtering != 1 && guarded != -1) handled = h;
+    }
   }
 
-  shv_respond(404, l, eio);
+  flu_list_free_all(rod);
+
+  shv_respond(l, eio);
 }
 
 static void shv_accept_cb(struct ev_loop *l, struct ev_io *eio, int revents)
@@ -202,5 +236,37 @@ void shv_serve(int port, shv_route **routes)
   //fgaj_i("closing...");
   //r = close(sd);
   //if (r != 0) { fgaj_r("close error"); /*exit(4);*/ }
+}
+
+shv_route *shv_route_malloc(shv_handler *guard, shv_handler *handler, ...)
+{
+  va_list ap; va_start(ap, handler);
+  flu_dict *params = flu_vd(ap);
+  va_end(ap);
+
+  shv_route *r = calloc(1, sizeof(shv_route));
+
+  r->guard = guard;
+  r->handler = handler;
+  r->params = params;
+
+  return r;
+}
+
+shv_route *shv_rp(char *path, shv_handler *handler, ...)
+{
+  va_list ap; va_start(ap, handler);
+  flu_dict *params = flu_vd(ap);
+  va_end(ap);
+
+  flu_list_set(params, "path", path);
+
+  shv_route *r = calloc(1, sizeof(shv_route));
+
+  r->guard = shv_path_guard;
+  r->handler = handler;
+  r->params = params;
+
+  return r;
 }
 
