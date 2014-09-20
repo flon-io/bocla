@@ -128,5 +128,15 @@ describe "bocla"
       ensure(flu_list_get(res->headers, "content-length") === "8");
     }
   }
+
+  describe "fcla_post()"
+  {
+    it "posts"
+    {
+      res = fcla_post("http://127.0.0.1:4567/mirror", NULL, "hello\nworld.");
+
+      printf("\n>>>\n%s\n<<<\n", res->body);
+    }
+  }
 }
 

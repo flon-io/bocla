@@ -71,6 +71,8 @@ static int mirror_handler(
   }
   flu_sbprintf(b, "method: %s\r\n", shv_char_to_method(req->method));
   flu_sbprintf(b, "path: %s\r\n", req->uri);
+  flu_sbputs(b, "\r\n");
+  if (req->body) flu_sbputs(b, req->body);
 
   flu_list_add(res->body, flu_sbuffer_to_string(b));
 

@@ -45,6 +45,11 @@ static size_t fcla_w(void *v, size_t s, size_t n, void *b)
   return flu_sbfwrite(b, v, s, n);
 }
 
+//static size_t fcla_r(char *b, size_t s, size_t n, void *v)
+//{
+//  //return flu_sbfwrite(b, v, s, n);
+//}
+
 static short fcla_extract_status(char *head)
 {
   return strtol(strchr(head, ' '), NULL, 10);
@@ -101,6 +106,7 @@ static fcla_response *fcla_request(
   if (meth == 'h') curl_easy_setopt(curl, CURLOPT_NOBODY, 1);
   //else if (meth == 'p') curl_easy_setopt(curl, CURLOPT_POST, 1);
   //else if (meth == 'u') curl_easy_setopt(curl, CURLOPT_PUT, 1);
+  else if (meth == 'p') curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
   else if (meth == 'd') curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
 
   curl_easy_setopt(curl, CURLOPT_URL, uri);
@@ -115,6 +121,13 @@ static fcla_response *fcla_request(
   //
   curl_easy_setopt(curl, CURLOPT_HEADERDATA, bhead);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, bbody);
+
+  if (meth == 'p' || meth == 'u')
+  {
+    //curl_easy_setopt(curl, CURLOPT_READDATA, body);
+    //curl_easy_setopt(curl, CURLOPT_READFUNCTION, fcla_r);
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body);
+  }
 
   if (headers != NULL)
   {
@@ -174,5 +187,10 @@ fcla_response *fcla_head(char *uri)
 fcla_response *fcla_delete(char *uri)
 {
   return fcla_request('d', uri, NULL, NULL);
+}
+
+fcla_response *fcla_post(char *uri, flu_dict *headers, char *body)
+{
+  return fcla_request('p', uri, headers, body);
 }
 
