@@ -121,7 +121,7 @@ describe "bocla"
 
       ensure(res->status_code == 200);
       ensure(res->body === "deleted.");
-      ensure(flu_list_get(res->headers, "Content-Length") === "8");
+      ensure(flu_list_get(res->headers, "content-length") === "8");
     }
   }
 }
