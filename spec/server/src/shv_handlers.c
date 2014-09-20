@@ -50,10 +50,6 @@ int shv_any_guard(
   return 1;
 }
 
-// IDEA:
-//   "/book/:name" for any method
-//   "GET /book/:name" to limit to GET
-
 int shv_path_guard(
   shv_request *req, flu_dict *rod, shv_response *res, flu_dict *params)
 {
@@ -64,7 +60,9 @@ int shv_path_guard(
   {
     char m = tolower(path[0]);
     if (tolower(path[1]) == 'u') m = 'u';
-    if (m != req->method) return 0;
+    char rm = req->method;
+    if (rm == 'h') rm = 'g';
+    if (m != rm) return 0;
     path = strchr(path, ' ') + 1;
   }
 
