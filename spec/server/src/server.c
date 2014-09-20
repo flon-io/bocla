@@ -27,9 +27,11 @@
 
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "gajeta.h"
 #include "shervin.h"
+#include "shv_protected.h"
 
 
 void grey_logger(char level, const char *pref, const char *msg)
@@ -46,7 +48,31 @@ static int hello_handler(
 {
   res->status_code = 200;
   //flu_list_set(res->headers, "content-type", "text/plain; charset=utf-8");
+
   flu_list_add(res->body, strdup("**hello world**\n"));
+
+  return 1;
+}
+
+static int mirror_handler(
+  shv_request *req, flu_dict *rod, shv_response *res, flu_dict *params)
+{
+  res->status_code = 200;
+  //flu_list_set(res->headers, "content-type", "text/plain; charset=utf-8");
+
+  flu_sbuffer *b = flu_sbuffer_malloc();
+
+  flu_sbprintf(
+    b, "%s %s HTTP/1.1\r\n", shv_char_to_method(req->method), req->uri);
+
+  for (flu_node *n = req->headers->first; n; n = n->next)
+  {
+    flu_sbprintf(b, "%s: %s\r\n", n->key, n->item);
+  }
+  flu_sbprintf(b, "method: %s\r\n", shv_char_to_method(req->method));
+  flu_sbprintf(b, "path: %s\r\n", req->uri);
+
+  flu_list_add(res->body, flu_sbuffer_to_string(b));
 
   return 1;
 }
@@ -56,6 +82,7 @@ static int delete_handler(
 {
   res->status_code = 200;
   //flu_list_set(res->headers, "content-type", "text/plain; charset=utf-8");
+
   flu_list_add(res->body, strdup("deleted."));
 
   return 1;
@@ -68,6 +95,7 @@ int main()
 
   shv_route **routes = (shv_route *[]){
     shv_rp("GET /hello", hello_handler, NULL),
+    shv_rp("/mirror", mirror_handler, NULL),
     shv_rp("DELETE /d", delete_handler, NULL),
     NULL // end route
   };

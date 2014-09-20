@@ -71,8 +71,8 @@ describe "bocla"
       //printf("\n%s\n", res->body);
       flu_list *d = fcla_extract_headers(res->body);
 
-      ensure(flu_list_get(d, "PATH_INFO") === "/mirror");
-      ensure(flu_list_get(d, "REQUEST_METHOD") === "GET");
+      ensure(flu_list_get(d, "path") === "/mirror");
+      ensure(flu_list_get(d, "method") === "GET");
 
       flu_list_and_items_free(d, free);
     }
@@ -92,7 +92,7 @@ describe "bocla"
       //printf("\n%s\n", res->body);
       flu_list *d = fcla_extract_headers(res->body);
 
-      ensure(flu_list_get(d, "HTTP_USER_AGENT") === "flon bocla 0.x");
+      ensure(flu_list_get(d, "user-agent") === "flon bocla 0.x");
 
       flu_list_and_items_free(d, free);
 
