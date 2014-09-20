@@ -39,6 +39,10 @@ describe "bocla"
     ensure(
       strcmp(res->body, "connect() timed out!") == 0 ||
       strncmp(res->body, "Failed to connect to ", 21) == 0);
+    //ensure(
+    //  res->body === "connect() timed out!" ||
+    //  res->body ^== "Failed to connect to ");
+      // rodzo can't deal with that...
   }
 
   describe "fcla_get()"
