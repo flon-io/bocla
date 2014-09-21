@@ -95,7 +95,7 @@ int main()
   fgaj_conf_get()->logger = grey_logger;
   //fgaj_conf_get()->level = 10;
 
-  shv_route **routes = (shv_route *[]){
+  shv_route *routes[] = {
     shv_rp("GET /hello", hello_handler, NULL),
     shv_rp("/mirror", mirror_handler, NULL),
     shv_rp("DELETE /d", delete_handler, NULL),
