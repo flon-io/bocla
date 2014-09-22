@@ -93,7 +93,7 @@ static void shv_init_parser()
   //puts(abr_parser_to_string(request_parser));
 }
 
-shv_request *shv_parse_request(char *s)
+shv_request *shv_parse_request_head(char *s)
 {
   //
   // parse

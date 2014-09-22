@@ -64,19 +64,19 @@ static void shv_init_uri_parser()
   abr_parser *host =
     abr_n_rex("host", "[^:/]+");
   abr_parser *port =
-    abr_seq(abr_string(":"), abr_n_rex("port", "[1-9][0-9]+"));
+    abr_seq(abr_string(":"), abr_n_rex("port", "[1-9][0-9]+"), NULL);
 
   abr_parser *path =
     abr_n_rex("path", "[^\\?#]+");
   abr_parser *quentry =
     abr_n_seq("quentry",
       abr_n_rex("key", "[^=&#]+"),
-      abr_seq(abr_string("="), abr_n_rex("val", "[^&#]+")), abr_q("?"),
+      abr_seq(abr_string("="), abr_n_rex("val", "[^&#]+"), abr_r("?")),
       NULL);
   abr_parser *query =
     abr_n_seq("query",
       quentry,
-      abr_seq(abr_string("&"), quentry), abr_q("*"),
+      abr_seq(abr_string("&"), quentry, abr_r("*")),
       NULL);
   abr_parser *fragment =
     abr_n_rex("fragment", ".+");
@@ -93,8 +93,8 @@ static void shv_init_uri_parser()
     abr_seq(
       shp, abr_q("?"),
       path,
-      abr_seq(abr_string("?"), query), abr_q("?"),
-      abr_seq(abr_string("#"), fragment), abr_q("?"),
+      abr_seq(abr_string("?"), query, abr_r("?")),
+      abr_seq(abr_string("#"), fragment, abr_r("?")),
       NULL);
 }
 

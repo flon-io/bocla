@@ -104,7 +104,7 @@ static void shv_handle_cb(struct ev_loop *l, struct ev_io *eio, int revents)
     char *head = flu_sbuffer_to_string(con->head);
     con->head = NULL;
 
-    con->req = shv_parse_request(head);
+    con->req = shv_parse_request_head(head);
     con->rqount++;
 
     free(head);
@@ -133,6 +133,9 @@ static void shv_handle_cb(struct ev_loop *l, struct ev_io *eio, int revents)
     (con->req->method == 'p' || con->req->method == 'u') &&
     (con->blen < shv_request_content_length(con->req))
   ) return; // request body not yet complete
+
+  con->req->body = flu_sbuffer_to_string(con->body);
+  con->body = NULL;
 
   shv_handle(l, eio);
 }
