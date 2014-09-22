@@ -47,7 +47,7 @@ fcla_response *fcla_delete(char *uri);
 fcla_response *fcla_post(char *uri, flu_list *headers, char *body);
 fcla_response *fcla_post_f(char *uri, flu_list *headers, char *path);
 fcla_response *fcla_put(char *uri, flu_list *headers, char *body);
-//fcla_response *fcla_put_f(char *uri, flu_list *headers, char *path);
+fcla_response *fcla_put_f(char *uri, flu_list *headers, char *path);
 
 
 //

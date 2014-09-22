@@ -206,11 +206,20 @@ fcla_response *fcla_post_f(char *uri, flu_dict *headers, char *path)
 {
   FILE *f = fopen(path, "r");
   // TODO: error handling
+
   return fcla_request('p', uri, headers, NULL, f);
 }
 
 fcla_response *fcla_put(char *uri, flu_dict *headers, char *body)
 {
   return fcla_request('u', uri, headers, body, NULL);
+}
+
+fcla_response *fcla_put_f(char *uri, flu_dict *headers, char *path)
+{
+  FILE *f = fopen(path, "r");
+  // TODO: error handling
+
+  return fcla_request('u', uri, headers, NULL, f);
 }
 
