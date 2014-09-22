@@ -83,7 +83,8 @@ static fcla_response *fcla_request(
   char meth,
   char *uri,
   flu_list *headers,
-  FILE *body)
+  char *sbody,
+  FILE *fbody)
 {
   fcla_response *res = calloc(1, sizeof(fcla_response));
   res->status_code = -1;
@@ -122,10 +123,17 @@ static fcla_response *fcla_request(
 
   if (meth == 'p' || meth == 'u')
   {
-    struct stat fi; fstat(fileno(body), &fi);
-    curl_easy_setopt(curl, CURLOPT_UPLOAD, 1);
-    curl_easy_setopt(curl, CURLOPT_READDATA, body);
-    curl_easy_setopt(curl, CURLOPT_INFILESIZE_LARGE, (curl_off_t)fi.st_size);
+    if (sbody)
+    {
+      curl_easy_setopt(curl, CURLOPT_POSTFIELDS, sbody);
+    }
+    else // fbody
+    {
+      struct stat fi; fstat(fileno(fbody), &fi);
+      curl_easy_setopt(curl, CURLOPT_UPLOAD, 1);
+      curl_easy_setopt(curl, CURLOPT_READDATA, fbody);
+      curl_easy_setopt(curl, CURLOPT_INFILESIZE_LARGE, (curl_off_t)fi.st_size);
+    }
   }
 
   if (headers != NULL)
@@ -170,7 +178,7 @@ _done:
 
 fcla_response *fcla_get_h(char *uri, flu_list *headers)
 {
-  return fcla_request('g', uri, headers, NULL);
+  return fcla_request('g', uri, headers, NULL, NULL);
 }
 
 fcla_response *fcla_get(char *uri)
@@ -180,25 +188,23 @@ fcla_response *fcla_get(char *uri)
 
 fcla_response *fcla_head(char *uri)
 {
-  return fcla_request('h', uri, NULL, NULL);
+  return fcla_request('h', uri, NULL, NULL, NULL);
 }
 
 fcla_response *fcla_delete(char *uri)
 {
-  return fcla_request('d', uri, NULL, NULL);
+  return fcla_request('d', uri, NULL, NULL, NULL);
 }
 
 fcla_response *fcla_post(char *uri, flu_dict *headers, char *body)
 {
-  FILE *f = fmemopen(body, strlen(body), "r");
-  // TODO: error handling
-  return fcla_request('p', uri, headers, f);
+  return fcla_request('p', uri, headers, body, NULL);
 }
 
 fcla_response *fcla_post_f(char *uri, flu_dict *headers, char *path)
 {
   FILE *f = fopen(path, "r");
   // TODO: error handling
-  return fcla_request('p', uri, headers, f);
+  return fcla_request('p', uri, headers, NULL, f);
 }
 

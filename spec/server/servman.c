@@ -40,8 +40,8 @@ void server_start()
     }
     else
     {
-      char *env[] = { "FGAJ_HOST=g", "FGAJ_LEVEL=10", NULL };
-      //char *env[] = { "FGAJ_HOST=g", NULL };
+      //char *env[] = { "FGAJ_HOST=g", "FGAJ_LEVEL=10", NULL };
+      char *env[] = { "FGAJ_HOST=g", NULL };
       execle("../spec/server/tmp/server", "", NULL, env);
     }
 
