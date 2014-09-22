@@ -90,6 +90,16 @@ static int delete_handler(
   return 1;
 }
 
+static int null_handler(
+  shv_request *req, flu_dict *rod, shv_response *res, flu_dict *params)
+{
+  res->status_code = 200;
+
+  flu_list_add(res->body, strdup("ok."));
+
+  return 1;
+}
+
 int main()
 {
   fgaj_conf_get()->logger = grey_logger;
@@ -99,6 +109,7 @@ int main()
     shv_rp("GET /hello", hello_handler, NULL),
     shv_rp("/mirror", mirror_handler, NULL),
     shv_rp("DELETE /d", delete_handler, NULL),
+    shv_rp("/null", null_handler, NULL),
     NULL // end route
   };
 

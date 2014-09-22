@@ -140,6 +140,15 @@ describe "bocla"
       char *s = strstr(res->body, "hello");
       ensure(s === "hello\nworld.");
     }
+
+    it "posts to /null"
+    {
+      res = fcla_post("http://127.0.0.1:4567/null", NULL, "nada.");
+
+      //printf("\n>>>\n%s\n<<<\n", res->body);
+
+      ensure(res->body === "ok.");
+    }
   }
 
   describe "fcla_post_f()"
