@@ -31,15 +31,21 @@ void server_start()
     char *v = getenv("VALSERV");
 
     if (v != NULL && (strcmp(v, "1") == 0 || strcmp(v, "true") == 0))
-      execl(
+    {
+      //char *env[] = { "FGAJ_HOST=g", "FGAJ_LEVEL=10", NULL };
+      char *env[] = { "FGAJ_HOST=g", NULL };
+      execle(
         "/usr/bin/valgrind", "",
-        "../spec/server/tmp/server", "", NULL);
+        "../spec/server/tmp/server", "", NULL, env);
+    }
     else
-      execl(
-        "../spec/server/tmp/server", "",
-        NULL);
+    {
+      char *env[] = { "FGAJ_HOST=g", "FGAJ_LEVEL=10", NULL };
+      //char *env[] = { "FGAJ_HOST=g", NULL };
+      execle("../spec/server/tmp/server", "", NULL, env);
+    }
 
-    perror("execl failed"); exit(1);
+    perror("execle failed"); exit(1);
   }
   else
   {
