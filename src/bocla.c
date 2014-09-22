@@ -106,6 +106,7 @@ static fcla_response *fcla_request(
   //else if (meth == 'p') curl_easy_setopt(curl, CURLOPT_POST, 1);
   //else if (meth == 'u') curl_easy_setopt(curl, CURLOPT_PUT, 1);
   else if (meth == 'p') curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
+  else if (meth == 'u') curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
   else if (meth == 'd') curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
 
   curl_easy_setopt(curl, CURLOPT_URL, uri);
@@ -206,5 +207,10 @@ fcla_response *fcla_post_f(char *uri, flu_dict *headers, char *path)
   FILE *f = fopen(path, "r");
   // TODO: error handling
   return fcla_request('p', uri, headers, NULL, f);
+}
+
+fcla_response *fcla_put(char *uri, flu_dict *headers, char *body)
+{
+  return fcla_request('u', uri, headers, body, NULL);
 }
 

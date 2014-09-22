@@ -162,5 +162,18 @@ describe "bocla"
       ensure(strstr(res->body, "spec/bocla_spec.c") != NULL);
     }
   }
+
+  describe "fcla_put()"
+  {
+    it "puts
+    {
+      res = fcla_put("http://127.0.0.1:4567/mirror", NULL, "put put put");
+
+      //printf("\n>>>\n%s\n<<<\n", res->body);
+
+      ensure(res->body ^== "PUT /mirror HTTP/1.1\r\n");
+      ensure(res->body $== "\r\n\r\nput put put");
+    }
+  }
 }
 
