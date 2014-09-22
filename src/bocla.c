@@ -45,11 +45,6 @@ static size_t fcla_w(void *v, size_t s, size_t n, void *b)
   return flu_sbfwrite(b, v, s, n);
 }
 
-//static size_t fcla_r(char *b, size_t s, size_t n, void *v)
-//{
-//  //return flu_sbfwrite(b, v, s, n);
-//}
-
 static short fcla_extract_status(char *head)
 {
   return strtol(strchr(head, ' '), NULL, 10);
@@ -124,9 +119,12 @@ static fcla_response *fcla_request(
 
   if (meth == 'p' || meth == 'u')
   {
-    //curl_easy_setopt(curl, CURLOPT_READDATA, body);
-    //curl_easy_setopt(curl, CURLOPT_READFUNCTION, fcla_r);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body);
+    //curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body);
+    size_t l = strlen(body);
+    FILE *fbody = fmemopen(body, strlen(body), "r");
+    curl_easy_setopt(curl, CURLOPT_UPLOAD, 1);
+    curl_easy_setopt(curl, CURLOPT_READDATA, fbody);
+    curl_easy_setopt(curl, CURLOPT_INFILESIZE_LARGE, (curl_off_t)l);
   }
 
   if (headers != NULL)
