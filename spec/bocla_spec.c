@@ -136,8 +136,21 @@ describe "bocla"
       res = fcla_post("http://127.0.0.1:4567/mirror", NULL, "hello\nworld.");
 
       //printf("\n>>>\n%s\n<<<\n", res->body);
+
       char *s = strstr(res->body, "hello");
       ensure(s === "hello\nworld.");
+    }
+  }
+
+  describe "fcla_post_f()"
+  {
+    it "posts"
+    {
+      res = fcla_post_f("http://127.0.0.1:4567/mirror", NULL, __FILE__);
+
+      //printf("\n>>>\n%s\n<<<\n", res->body);
+
+      ensure(strstr(res->body, "spec/bocla_spec.c") != NULL);
     }
   }
 }

@@ -27,6 +27,9 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <curl/curl.h>
 
 #include "bocla.h"
@@ -80,7 +83,7 @@ static fcla_response *fcla_request(
   char meth,
   char *uri,
   flu_list *headers,
-  char *body)
+  FILE *body)
 {
   fcla_response *res = calloc(1, sizeof(fcla_response));
   res->status_code = -1;
@@ -119,12 +122,10 @@ static fcla_response *fcla_request(
 
   if (meth == 'p' || meth == 'u')
   {
-    //curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body);
-    size_t l = strlen(body);
-    FILE *fbody = fmemopen(body, strlen(body), "r");
+    struct stat fi; fstat(fileno(body), &fi);
     curl_easy_setopt(curl, CURLOPT_UPLOAD, 1);
-    curl_easy_setopt(curl, CURLOPT_READDATA, fbody);
-    curl_easy_setopt(curl, CURLOPT_INFILESIZE_LARGE, (curl_off_t)l);
+    curl_easy_setopt(curl, CURLOPT_READDATA, body);
+    curl_easy_setopt(curl, CURLOPT_INFILESIZE_LARGE, (curl_off_t)fi.st_size);
   }
 
   if (headers != NULL)
@@ -189,6 +190,15 @@ fcla_response *fcla_delete(char *uri)
 
 fcla_response *fcla_post(char *uri, flu_dict *headers, char *body)
 {
-  return fcla_request('p', uri, headers, body);
+  FILE *f = fmemopen(body, strlen(body), "r");
+  // TODO: error handling
+  return fcla_request('p', uri, headers, f);
+}
+
+fcla_response *fcla_post_f(char *uri, flu_dict *headers, char *path)
+{
+  FILE *f = fopen(path, "r");
+  // TODO: error handling
+  return fcla_request('p', uri, headers, f);
 }
 
