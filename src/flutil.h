@@ -23,6 +23,8 @@
 // Made in Japan.
 //
 
+// https://github.com/flon-io/flutil
+
 // flutil.h
 
 #ifndef FLON_FLUTIL_H
@@ -232,6 +234,10 @@ void *flu_list_shift(flu_list *l);
 
 //void *flu_list_pop(flu_list *l);
 //void flu_list_insert(flu_list *l, size_t index, const void *item);
+
+/* Performs an insertion sort (in place) of the flu_list.
+ */
+void flu_list_isort(flu_list *l, int (*cmp)(const void *, const void *));
 
 //
 // flu_list dictionary functions
