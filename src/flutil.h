@@ -32,35 +32,10 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <time.h>
 
 
 #define FLU_VERSION "1.0.0"
-
-//
-// str functions
-
-/* Returns 1 if the string s ends with the end string. Returns 0 else.
- */
-int flu_strends(const char *s, const char *end);
-
-/* Returns a copy of the string, trimmed on the right.
- */
-char *flu_strrtrim(const char *s);
-
-/* Returns a trimmed copy of the string, left and right.
- */
-char *flu_strtrim(const char *s);
-
-/* Returns the index of the first occurence of char c in string s.
- * Starts searching at s + off.
- */
-ssize_t flu_index(const char *s, size_t off, char c);
-
-/* Returns the index of the last occurence of char c in string s.
- * Starts searching at s + off.
- * Setting off to -1, is equivalent to setting it to strlen(s) - 1.
- */
-ssize_t flu_rindex(const char *s, ssize_t off, char c);
 
 
 //
@@ -142,18 +117,73 @@ char *flu_sprintf(const char *format, ...);
 /* Given a path, reads the content of the path in a new string.
  * Returns NULL if reading failed for any reason.
  */
-char *flu_readall(const char *path);
+char *flu_readall(const char *path, ...);
+
+char *flu_vreadall(const char *path, va_list ap);
 
 /* Given a file, reads all its content to a new string.
  * Returns NULL if reading failed for any reason.
  */
 char *flu_freadall(FILE *in);
 
+/* Writes a file to disk.
+ * Returns 1 when successful.
+ * Useful when setting up test files
+ */
+int flu_writeall(const char *path, ...);
+
+
+//
+// "path" functions
+
+/* Like unlink(2), but accepts a path format and arguments.
+ * Returns 0 in case of success, like unlink.
+ */
+int flu_unlink(const char *path, ...);
+
+/* It canonicalizes a path, like realpath().
+ * Unlike realpath(), it doesn't care if the path points to nowhere.
+ */
+char *flu_canopath(const char *path, ...);
+
+/* Given a path, returns its dir path.
+ */
+char *flu_dirname(const char *path, ...);
+
+/* Given a path, returns the file basename.
+ * If a new suffix is given (as a last char * arg) the file suffix
+ * (from the last dot) is replaced with the new_suffix (an example: ".json").
+ * If the new suffix doesn't begin with a dot, NULL is returned.
+ */
+char *flu_basename(const char *path, ...);
+
+/* If the path points to nowhere, returns 0 ('\0').
+ * If the path points to a directory, returns 'd'.
+ * Else returns 'f'.
+ */
+char flu_fstat(const char *path, ...);
+
+/* Moves a file (or a directory). Behaves much like the "mv" user command.
+ * Returns 0 in case of success.
+ *
+ * Basically, the signature is
+ * ```int flu_move(const char *path, const char *destination);```
+ * but one can do
+ * ```flu_move("src/%i/t.c", x, "arch/src/%i/t.c", y)```
+ */
+int flu_move(const char *path, ...);
+
+/* Creates a series of directories.
+ * Expects `int mode` as its last argument.
+ * Like mkdir(3) returns 0 in case of success.
+ */
+int flu_mkdir_p(const char *path, ...);
+
 
 //
 // flu_list
 //
-// a minimal list/stack/set with no ambition
+// a minimal list/stack/set without ambition
 
 typedef struct flu_node {
   struct flu_node *next;
@@ -278,6 +308,38 @@ flu_list *flu_d(char *k0, void *v0, ...);
 
 
 //
+// str functions
+
+/* Returns 1 if the string s ends with the end string. Returns 0 else.
+ */
+int flu_strends(const char *s, const char *end);
+
+/* Returns a copy of the string, trimmed on the right.
+ */
+char *flu_strrtrim(const char *s);
+
+/* Returns a trimmed copy of the string, left and right.
+ */
+char *flu_strtrim(const char *s);
+
+/* Returns the index of the first occurence of char c in string s.
+ * Starts searching at s + off.
+ */
+ssize_t flu_index(const char *s, size_t off, char c);
+
+/* Returns the index of the last occurence of char c in string s.
+ * Starts searching at s + off.
+ * Setting off to -1, is equivalent to setting it to strlen(s) - 1.
+ */
+ssize_t flu_rindex(const char *s, ssize_t off, char c);
+
+/* Returns a list of the split chars.
+ * Remember: you'll have to `flu_list_free_all(l)`.
+ */
+flu_list *flu_split(const char *s, const char *delim);
+
+
+//
 // escape
 
 /* Returns an escaped copy of the given string.
@@ -291,6 +353,9 @@ char *flu_n_escape(const char *s, size_t n);
  */
 char *flu_unescape(const char *s);
 char *flu_n_unescape(const char *s, size_t n);
+
+char *flu_urlencode(const char *s, ssize_t n);
+char *flu_urldecode(const char *s, ssize_t n);
 
 
 //
@@ -306,13 +371,74 @@ void flu_die(int exit_value, const char *format, ...);
  */
 char *flu_strdup(char *s);
 
-/* Returns the count of milliseconds (10-3) since the Epoch.
+/* Like system(3), but accepts a format string and arguments.
  */
-long long flu_getms();
+int flu_system(const char *format, ...);
 
-/* Returns the count of microseconds (10-6) since the Epoch.
+
+//
+// time
+
+/* Returns the seconds/nanoseconds since the Epoch.
  */
-long long flu_getMs();
+struct timespec *flu_now();
+
+/* Returns the count of seconds since the Epoch.
+ * If level is set to 'm', it will return milliseconds.
+ * If level is set to 'u', it will return microseconds.
+ * If level is set to 'n', it will return nanoseconds.
+ */
+long long flu_gets(char level);
+
+/* Sleeps for a given amount of milliseconds.
+ * Returns how many milliseconds still have to be slepts (interrupted).
+ */
+long long flu_msleep(long long milliseconds);
+
+/* Sleeps for a given amount of milliseconds.
+ * If interrupted, sleeps again until the required milliseconds have all been
+ * slept through. Returns the how many milliseconds it actually slept.
+ */
+long long flu_do_msleep(long long milliseconds);
+
+/* Formats the given time into a string.
+ *
+ * 'z' --> "2014-11-01T16:34:01Z"
+ * 'h' --> "20141101.1634"
+ * 's' --> "20141101.163401"
+ * 'm' --> "20141101.163401.001"  // milliseconds
+ * 'u' --> "20141101.163401.000001"  // microseconds
+ * 'n' --> "20141101.163401.000000001"  // nanoseconds
+ *
+ * If the tm arg is NULL, the function will grab the time thanks to
+ * clock_gettime(CLOCK_REALTIME, &ts).
+ */
+char *flu_tstamp(struct timespec *ts, int utc, char format);
+
+/* Parses a timestamp, takes a utc hint.
+ *
+ * /!\ not thread-safe, sets and resets the "TZ" env variable /!\
+ */
+struct timespec *flu_parse_tstamp(char *s, int utc);
+
+/* Does t1 - t0, over seconds and nanoseconds.
+ */
+struct timespec *flu_tdiff(struct timespec *t1, struct timespec *t0);
+
+/* Use to print the output of flu_tdiff().
+ */
+char *flu_ts_to_s(struct timespec *ts, char format);
+
+/* Given a string like "10h55s" returns a timespec instance.
+ * Returns NULL when it fails to parse.
+ */
+struct timespec *flu_parse_ts(const char *s);
+
+/* Like flu_parse_ts() but returns seconds (not a full timespec, so no
+ * nanoseconds).
+ * When it cannot parse, it sets errno to EINVAL and returns 0.
+ */
+long long flu_parse_t(const char *s);
 
 #endif // FLON_FLUTIL_H
 
