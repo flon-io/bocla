@@ -9,7 +9,7 @@ default: $(NAME).o
 # copy updated version of dep libs into src/
 #
 upgrade:
-	cp -v ../flutil/src/flutil.* src/
+	cp -v ../flutil/src/flutil.[ch] src/
 
 supgrade:
 	$(MAKE) -C spec/server/ upgrade
