@@ -1,7 +1,8 @@
 
-CFLAGS=-I../src -g -Wall -O3
-LDLIBS=/usr/lib/x86_64-linux-gnu/libcurl.so # :-(
-CC=c99
+CFLAGS=-I../src -g -Wall
+#CFLAGS=-I../src -g -Wall -O3
+LDLIBS=
+CC=c99 -lcurl
 VPATH=../src
 
 RODZO=$(shell which rodzo)
