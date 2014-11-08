@@ -204,32 +204,31 @@ fcla_response *fcla_post(char *uri, flu_dict *headers, char *body)
   return fcla_request('p', uri, headers, body, NULL);
 }
 
-fcla_response *fcla_post_f(char *uri, flu_dict *headers, char *path)
-{
-  FILE *f = fopen(path, "r");
-  // TODO: error handling
-
-  fcla_response *res = fcla_request('p', uri, headers, NULL, f);
-
-  fclose(f);
-
-  return res;
-}
-
 fcla_response *fcla_put(char *uri, flu_dict *headers, char *body)
 {
   return fcla_request('u', uri, headers, body, NULL);
 }
 
-fcla_response *fcla_put_f(char *uri, flu_dict *headers, char *path)
+static fcla_response *fcla_upload_f(
+  char meth, char *uri, flu_dict *headers, char *path)
 {
   FILE *f = fopen(path, "r");
   // TODO: error handling
 
-  fcla_response *res = fcla_request('u', uri, headers, NULL, f);
+  fcla_response *res = fcla_request(meth, uri, headers, NULL, f);
 
   fclose(f);
 
   return res;
+}
+
+fcla_response *fcla_post_f(char *uri, flu_dict *headers, char *path)
+{
+  return fcla_upload_f('p', uri, headers, path);
+}
+
+fcla_response *fcla_put_f(char *uri, flu_dict *headers, char *path)
+{
+  return fcla_upload_f('u', uri, headers, path);
 }
 
