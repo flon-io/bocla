@@ -41,15 +41,22 @@ typedef struct fcla_response {
 
 void fcla_response_free(fcla_response *r);
 
-fcla_response *fcla_ghd(char meth, short has_headers, char *uri, ...);
+fcla_response *fcla_ghd(char meth, char hstyle, char *uri, ...);
 
 #define fcla_get(...) fcla_ghd('g', 0, __VA_ARGS__)
 #define fcla_head(...) fcla_ghd('h', 0, __VA_ARGS__)
 #define fcla_delete(...) fcla_ghd('d', 0, __VA_ARGS__)
 
-#define fcla_get_h(...) fcla_ghd('g', 1, __VA_ARGS__)
-#define fcla_head_h(...) fcla_ghd('h', 1, __VA_ARGS__)
-#define fcla_delete_h(...) fcla_ghd('d', 1, __VA_ARGS__)
+#define fcla_get_h(...) fcla_ghd('g', 'h', __VA_ARGS__)
+#define fcla_head_h(...) fcla_ghd('h', 'h', __VA_ARGS__)
+#define fcla_delete_h(...) fcla_ghd('d', 'h', __VA_ARGS__)
+
+//
+// fcla_get_d(meth, uri, ..., k0, v0, k1, v1, NULL);
+
+#define fcla_get_d(...) fcla_ghd('g', 'd', __VA_ARGS__)
+#define fcla_head_d(...) fcla_ghd('h', 'd', __VA_ARGS__)
+#define fcla_delete_d(...) fcla_ghd('d', 'd', __VA_ARGS__)
 
 fcla_response *fcla_post(char *uri, flu_list *headers, char *body);
 fcla_response *fcla_post_f(char *uri, flu_list *headers, char *path);

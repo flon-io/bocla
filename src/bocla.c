@@ -179,13 +179,16 @@ _done:
   return res;
 }
 
-fcla_response *fcla_ghd(char meth, short has_headers, char *uri, ...)
+fcla_response *fcla_ghd(char meth, char hstyle, char *uri, ...)
 {
-  flu_dict *h = NULL;
-
   va_list ap; va_start(ap, uri);
+
   char *u = flu_svprintf(uri, ap);
-  if (has_headers) h = va_arg(ap, flu_dict *);
+
+  flu_dict *h = NULL;
+  if (hstyle == 'h') h = va_arg(ap, flu_dict *);
+  else if (hstyle == 'd') h = flu_vd(ap);
+
   va_end(ap);
 
   fcla_response *r = fcla_request(meth, u, h, NULL, NULL);

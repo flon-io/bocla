@@ -129,6 +129,22 @@ describe "bocla"
     }
   }
 
+  describe "fcla_get_d()"
+  {
+    it "composes uri and then collect header entries"
+    {
+      res = fcla_get_d(
+        "http://127.0.0.1:4567/%s", "mirror",
+        "user-agent", "flon bocla 0.x", NULL);
+
+      ensure(res != NULL);
+      ensure(res->body != NULL);
+
+      //printf("\n%s\n", res->body);
+      expect(strstr(res->body, "user-agent: flon bocla 0.x") != NULL);
+    }
+  }
+
   describe "fcla_head()"
   {
     it "heads 200"
