@@ -80,6 +80,14 @@ describe "bocla"
 
       flu_list_and_items_free(d, free);
     }
+
+    it "composes its uri"
+    {
+      res = fcla_get("http://127.0.0.1:4567/%so", "hell");
+
+      ensure(res->status_code == 200);
+      ensure(res->body === "**hello world**\n");
+    }
   }
 
   describe "fcla_get_h()"

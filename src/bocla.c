@@ -181,9 +181,15 @@ _done:
 
 fcla_response *fcla_ghd(char meth, char *uri, ...)
 {
-  // TODO va_list...
+  va_list ap; va_start(ap, uri);
+  char *u = flu_svprintf(uri, ap);
+  va_end(ap);
 
-  return fcla_request(meth, uri, NULL, NULL, NULL);
+  fcla_response *r = fcla_request(meth, u, NULL, NULL, NULL);
+
+  free(u);
+
+  return r;
 }
 
 fcla_response *fcla_get_h(char *uri, flu_list *headers)
