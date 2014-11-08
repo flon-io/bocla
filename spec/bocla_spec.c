@@ -221,6 +221,44 @@ describe "bocla"
     }
   }
 
+  describe "fcla_post_h()"
+  {
+    it "posts"
+    {
+      flu_dict *h = flu_d("user-agent", "post-h", NULL);
+
+      res = fcla_post_h(
+        "http://127.0.0.1:4567/mir%sr", "ro",
+        "hello%sworld.", "\n",
+        h);
+
+      //printf("\n>>>\n%s\n<<<\n", res->body);
+
+      ensure(res != NULL);
+      ensure(res->status_code == 200);
+      ensure(strstr(res->body, "\r\nuser-agent: post-h\r\n") != NULL);
+
+      flu_list_free(h);
+    }
+  }
+
+  describe "fcla_post_d()"
+  {
+    it "posts"
+    {
+      res = fcla_post_d(
+        "http://127.0.0.1:4567/mir%sr", "ro",
+        "hello%sworld.", "\n",
+        "user-%s", "agent", "post-%s", "d", NULL);
+
+      //printf("\n>>>\n%s\n<<<\n", res->body);
+
+      ensure(res != NULL);
+      ensure(res->status_code == 200);
+      ensure(strstr(res->body, "\r\nuser-agent: post-d\r\n") != NULL);
+    }
+  }
+
   describe "fcla_put()"
   {
     it "puts"
