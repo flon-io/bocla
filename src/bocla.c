@@ -170,11 +170,11 @@ static fcla_response *fcla_request(
 
 _done:
 
-  if (curl != NULL) curl_easy_cleanup(curl);
+  if (curl) curl_easy_cleanup(curl);
   if (res->status_code > -1 && buffer != NULL) free(buffer);
-  if (bhead != NULL) flu_sbuffer_free(bhead);
-  if (bbody != NULL) flu_sbuffer_free(bbody);
-  if (cheaders != NULL) curl_slist_free_all(cheaders);
+  if (bhead) flu_sbuffer_free(bhead);
+  if (bbody) flu_sbuffer_free(bbody);
+  if (cheaders) curl_slist_free_all(cheaders);
 
   return res;
 }
@@ -209,7 +209,11 @@ fcla_response *fcla_post_f(char *uri, flu_dict *headers, char *path)
   FILE *f = fopen(path, "r");
   // TODO: error handling
 
-  return fcla_request('p', uri, headers, NULL, f);
+  fcla_response *res = fcla_request('p', uri, headers, NULL, f);
+
+  fclose(f);
+
+  return res;
 }
 
 fcla_response *fcla_put(char *uri, flu_dict *headers, char *body)
@@ -222,6 +226,10 @@ fcla_response *fcla_put_f(char *uri, flu_dict *headers, char *path)
   FILE *f = fopen(path, "r");
   // TODO: error handling
 
-  return fcla_request('u', uri, headers, NULL, f);
+  fcla_response *res = fcla_request('u', uri, headers, NULL, f);
+
+  fclose(f);
+
+  return res;
 }
 
