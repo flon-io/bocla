@@ -234,9 +234,31 @@ describe "bocla"
 
       //printf("\n>>>\n%s\n<<<\n", res->body);
 
-      ensure(res != NULL);
-      ensure(res->status_code == 200);
-      ensure(strstr(res->body, "\r\nuser-agent: post-h\r\n") != NULL);
+      expect(res != NULL);
+      expect(res->status_code == 200);
+      expect(strstr(res->body, "\r\nuser-agent: post-h\r\n") != NULL);
+
+      flu_list_free(h);
+    }
+  }
+
+  describe "fcla_post_fh()"
+  {
+    it "posts"
+    {
+      flu_dict *h = flu_d("user-agent", "post-fh", NULL);
+
+      res = fcla_post_fh(
+        "http://127.0.0.1:4567/mir%sr", "ro",
+        __FILE__,
+        h);
+
+      //printf("\n>>>\n%s\n<<<\n", res->body);
+
+      expect(res != NULL);
+      expect(res->status_code == 200);
+      expect(strstr(res->body, "\r\nuser-agent: post-fh\r\n") != NULL);
+      expect(strstr(res->body, "\n// Fri Sep  5 05:37:45 JST 2014\n") != NULL);
 
       flu_list_free(h);
     }
@@ -256,6 +278,24 @@ describe "bocla"
       ensure(res != NULL);
       ensure(res->status_code == 200);
       ensure(strstr(res->body, "\r\nuser-agent: post-d\r\n") != NULL);
+    }
+  }
+
+  describe "fcla_post_fd()"
+  {
+    it "posts"
+    {
+      res = fcla_post_fd(
+        "http://127.0.0.1:4567/mir%sr", "ro",
+        __FILE__,
+        "user-%s", "agent", "post-%s", "d", NULL);
+
+      //printf("\n>>>\n%s\n<<<\n", res->body);
+
+      ensure(res != NULL);
+      ensure(res->status_code == 200);
+      ensure(strstr(res->body, "\r\nuser-agent: post-d\r\n") != NULL);
+      expect(strstr(res->body, "\n// Fri Sep  5 05:37:45 JST 2014\n") != NULL);
     }
   }
 
