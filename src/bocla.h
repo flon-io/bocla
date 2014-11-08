@@ -41,11 +41,19 @@ typedef struct fcla_response {
 
 void fcla_response_free(fcla_response *r);
 
+/* Used behind the scenes by the _get/_head/_delete[_x|_d] methods (macros).
+ */
 fcla_response *fcla_ghd(char meth, char hstyle, char *uri, ...);
+
+//
+// fcla_get(meth, uri, ...);
 
 #define fcla_get(...) fcla_ghd('g', 0, __VA_ARGS__)
 #define fcla_head(...) fcla_ghd('h', 0, __VA_ARGS__)
 #define fcla_delete(...) fcla_ghd('d', 0, __VA_ARGS__)
+
+//
+// fcla_get_h(meth, uri, ..., flu_list *headers);
 
 #define fcla_get_h(...) fcla_ghd('g', 'h', __VA_ARGS__)
 #define fcla_head_h(...) fcla_ghd('h', 'h', __VA_ARGS__)
