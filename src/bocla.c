@@ -199,36 +199,41 @@ fcla_response *fcla_ghd(char meth, char hstyle, char *uri, ...)
   return r;
 }
 
-fcla_response *fcla_post(char *uri, flu_dict *headers, char *body)
+fcla_response *fcla_popu(char meth, char hstyle, char bstyle, char *uri, ...)
 {
-  return fcla_request('p', uri, headers, body, NULL);
-}
+  char *u = NULL;
+  flu_dict *h = NULL;
+  char *s = NULL;
+  FILE *f = NULL;
 
-fcla_response *fcla_put(char *uri, flu_dict *headers, char *body)
-{
-  return fcla_request('u', uri, headers, body, NULL);
-}
+  va_list ap; va_start(ap, uri);
 
-static fcla_response *fcla_upload_f(
-  char meth, char *uri, flu_dict *headers, char *path)
-{
-  FILE *f = fopen(path, "r");
-  // TODO: error handling
+  u = flu_svprintf(uri, ap);
 
-  fcla_response *res = fcla_request(meth, uri, headers, NULL, f);
+  if (hstyle == 'h') h = va_arg(ap, flu_dict *);
 
-  fclose(f);
+  char *sf = va_arg(ap, char *);
+  if (sf == NULL) return NULL;
+  s = flu_svprintf(sf, ap);
 
-  return res;
-}
+  if (hstyle == 'H') h = va_arg(ap, flu_dict *);
+  else if (hstyle == 'd') h = flu_vsd(ap);
 
-fcla_response *fcla_post_f(char *uri, flu_dict *headers, char *path)
-{
-  return fcla_upload_f('p', uri, headers, path);
-}
+  va_end(ap);
 
-fcla_response *fcla_put_f(char *uri, flu_dict *headers, char *path)
-{
-  return fcla_upload_f('u', uri, headers, path);
+  if (bstyle == 'f')
+  {
+    f = fopen(s, "r");
+    // TODO: error handling
+  }
+
+  fcla_response *r = fcla_request(meth, u, h, f ? NULL : s, f);
+
+  free(u);
+  free(s);
+  if (hstyle == 'd') flu_list_free_all(h);
+  if (f) fclose(f);
+
+  return r;
 }
 
