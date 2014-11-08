@@ -111,6 +111,22 @@ describe "bocla"
       flu_list_free(hs);
         // the values are not on the heap, no need to use _and_items_free()
     }
+
+    it "composes its uri"
+    {
+      flu_list *hs = flu_d("user-agent", "flon bocla 0.x", NULL);
+      //
+      res = fcla_get_h("http://127.0.0.1:4567/%s", "mirror", hs);
+
+      ensure(res != NULL);
+      ensure(res->body != NULL);
+
+      //printf("\n%s\n", res->body);
+      expect(strstr(res->body, "user-agent: flon bocla 0.x") != NULL);
+
+      flu_list_free(hs);
+        // the values are not on the heap, no need to use _and_items_free()
+    }
   }
 
   describe "fcla_head()"

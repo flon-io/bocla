@@ -179,22 +179,20 @@ _done:
   return res;
 }
 
-fcla_response *fcla_ghd(char meth, char *uri, ...)
+fcla_response *fcla_ghd(char meth, short has_headers, char *uri, ...)
 {
+  flu_dict *h = NULL;
+
   va_list ap; va_start(ap, uri);
   char *u = flu_svprintf(uri, ap);
+  if (has_headers) h = va_arg(ap, flu_dict *);
   va_end(ap);
 
-  fcla_response *r = fcla_request(meth, u, NULL, NULL, NULL);
+  fcla_response *r = fcla_request(meth, u, h, NULL, NULL);
 
   free(u);
 
   return r;
-}
-
-fcla_response *fcla_get_h(char *uri, flu_list *headers)
-{
-  return fcla_request('g', uri, headers, NULL, NULL);
 }
 
 fcla_response *fcla_post(char *uri, flu_dict *headers, char *body)
