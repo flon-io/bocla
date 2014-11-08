@@ -57,9 +57,10 @@ void server_stop()
 {
   if (server_pid < 1) return;
 
-  printf("stopping %i...\n", server_pid);
   kill(server_pid, SIGTERM);
 
-  sleep(1);
+  int status; waitpid(server_pid, &status, 0);
+
+  printf("stopped %i... -> %i\n", server_pid, status);
 }
 
