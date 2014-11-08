@@ -187,13 +187,14 @@ fcla_response *fcla_ghd(char meth, char hstyle, char *uri, ...)
 
   flu_dict *h = NULL;
   if (hstyle == 'h') h = va_arg(ap, flu_dict *);
-  else if (hstyle == 'd') h = flu_vd(ap);
+  else if (hstyle == 'd') h = flu_vsd(ap);
 
   va_end(ap);
 
   fcla_response *r = fcla_request(meth, u, h, NULL, NULL);
 
   free(u);
+  if (hstyle == 'd') flu_list_free_all(h);
 
   return r;
 }

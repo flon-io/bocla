@@ -143,6 +143,22 @@ describe "bocla"
       //printf("\n%s\n", res->body);
       expect(strstr(res->body, "user-agent: flon bocla 0.x") != NULL);
     }
+
+    it "composes its header entries"
+    {
+      res = fcla_get_d(
+        "http://127.0.0.1:4567/%s", "mirror",
+        "user-agent", "flon bocla 7.%i", 9,
+        "x-bocla-auth", "na%s", "da",
+        NULL);
+
+      ensure(res != NULL);
+      ensure(res->body != NULL);
+
+      //printf("\n%s\n", res->body);
+      expect(strstr(res->body, "\r\nuser-agent: flon bocla 7.9\r\n") != NULL);
+      expect(strstr(res->body, "\r\nx-bocla-auth: nada\r\n") != NULL);
+    }
   }
 
   describe "fcla_head()"
