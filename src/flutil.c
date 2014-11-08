@@ -707,9 +707,8 @@ flu_list *flu_vsd(va_list ap)
     if (kf == NULL) break;
     char *k = flu_svprintf(kf, ap);
 
-    char *v = NULL;
     char *vf = va_arg(ap, char *);
-    if (vf) v = flu_svprintf(vf, ap);
+    char *v = vf ? flu_svprintf(vf, ap) : NULL;
 
     flu_list_set(d, k, v);
 
@@ -724,10 +723,9 @@ flu_list *flu_sd(char *kf0, ...)
   va_list ap; va_start(ap, kf0);
 
   char *k0 = flu_svprintf(kf0, ap);
-  char *v0 = NULL;
 
   char *vf0 = va_arg(ap, char *);
-  if (vf0) v0 = flu_svprintf(vf0, ap);
+  char *v0 = vf0 ? flu_svprintf(vf0, ap) : NULL;
 
   flu_list *d = flu_vsd(ap);
   va_end(ap);
