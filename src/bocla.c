@@ -179,24 +179,16 @@ _done:
   return res;
 }
 
+fcla_response *fcla_ghd(char meth, char *uri, ...)
+{
+  // TODO va_list...
+
+  return fcla_request(meth, uri, NULL, NULL, NULL);
+}
+
 fcla_response *fcla_get_h(char *uri, flu_list *headers)
 {
   return fcla_request('g', uri, headers, NULL, NULL);
-}
-
-fcla_response *fcla_get(char *uri)
-{
-  return fcla_get_h(uri, NULL);
-}
-
-fcla_response *fcla_head(char *uri)
-{
-  return fcla_request('h', uri, NULL, NULL, NULL);
-}
-
-fcla_response *fcla_delete(char *uri)
-{
-  return fcla_request('d', uri, NULL, NULL, NULL);
 }
 
 fcla_response *fcla_post(char *uri, flu_dict *headers, char *body)
