@@ -139,11 +139,21 @@ static fcla_response *fcla_request(
     }
   }
 
+  if (flu_list_get(headers, "_u"))
+  {
+    char *us = flu_list_get(headers, "_u");
+    char *pa = flu_list_get(headers, "_p"); if (pa == NULL) pa = "";
+
+    curl_easy_setopt(curl, CURLOPT_USERNAME, us);
+    curl_easy_setopt(curl, CURLOPT_PASSWORD, pa);
+  }
+
   if (headers != NULL)
   {
     flu_list *tl = flu_list_dtrim(headers);
     for (flu_node *n = tl->first; n != NULL; n = n->next)
     {
+      if (*n->key == '_' && (n->key[1] == 'u' || n->key[1] == 'p')) continue;
       char *s = flu_sprintf("%s: %s", n->key, (char *)n->item);
       cheaders = curl_slist_append(cheaders, s);
       free(s);

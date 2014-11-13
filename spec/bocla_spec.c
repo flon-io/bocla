@@ -45,6 +45,28 @@ describe "bocla"
       // rodzo can't deal with that...
   }
 
+  it "set Authorization: Basic u:p when passed '_u' (and '_p')"
+  {
+    res = fcla_get_d(
+      "http://127.0.0.1:4567/mirror",
+      "_u", "john", "_p", "wyvern", NULL);
+
+    ensure(res->status_code == 200);
+
+    ensure(res->body != NULL);
+
+    //printf("\n%s\n", res->body);
+    flu_list *d = fcla_extract_headers(res->body);
+
+    ensure(flu_list_get(d, "path") === "/mirror");
+    ensure(flu_list_get(d, "method") === "GET");
+    ensure(flu_list_get(d, "authorization") === "Basic am9objp3eXZlcm4=");
+    ensure(flu_list_get(d, "_u") == NULL);
+    ensure(flu_list_get(d, "_p") == NULL);
+
+    flu_list_and_items_free(d, free);
+  }
+
   describe "fcla_get()"
   {
     it "gets 200"
