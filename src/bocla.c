@@ -139,7 +139,7 @@ static fcla_response *fcla_request(
     }
   }
 
-  if (flu_list_get(headers, "_u"))
+  if (headers && flu_list_get(headers, "_u"))
   {
     char *us = flu_list_get(headers, "_u");
     char *pa = flu_list_get(headers, "_p"); if (pa == NULL) pa = "";
