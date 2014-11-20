@@ -23,6 +23,8 @@
 // Made in Japan.
 //
 
+// https://github.com/flon-io/shervin
+
 #define _POSIX_C_SOURCE 200809L
 
 #include <shervin.h>
@@ -32,13 +34,15 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
+
 #include <ev.h>
 
 #include "flutil.h"
 #include "gajeta.h"
 #include "shv_protected.h"
-
-#define SHV_BUFFER_SIZE 2048
 
 
 static void shv_close(struct ev_loop *l, struct ev_io *eio)
@@ -46,13 +50,22 @@ static void shv_close(struct ev_loop *l, struct ev_io *eio)
   shv_con_free((shv_con *)eio->data);
 
   ev_io_stop(l, eio);
+  close(eio->fd);
+  //fgaj_d(reason, eio);
   free(eio);
-  fgaj_d("c%p closed by client", eio);
 }
 
 static void shv_handle_cb(struct ev_loop *l, struct ev_io *eio, int revents)
 {
   if (EV_ERROR & revents) { fgaj_r("invalid event"); return; }
+
+  if (fcntl(eio->fd, F_SETFL, fcntl(eio->fd, F_GETFL) | O_NONBLOCK) == -1)
+  {
+    fgaj_tr("couldn't set nonblock (i%p fd %i)", eio, eio->fd);
+    shv_close(l, eio);
+    return;
+  }
+  //fgaj_t("eio->fd flags: %i", fcntl(eio->fd, F_GETFL));
 
   shv_con *con = (shv_con *)eio->data;
 
@@ -60,12 +73,19 @@ static void shv_handle_cb(struct ev_loop *l, struct ev_io *eio, int revents)
 
   ssize_t r = recv(eio->fd, buffer, SHV_BUFFER_SIZE, 0);
 
-  if (r < 0) { fgaj_r("read error"); return; }
-  if (r == 0) { shv_close(l, eio); return; }
+  fgaj_d("read: %li (i%p fd %i)", r, eio, eio->fd);
+
+  if (r < 0 && errno == EAGAIN) return;
+
+  else if (r <= 0) {
+    if (r < 0) fgaj_r("read error (i%p fd %i)", eio, eio->fd);
+    shv_close(l, eio);
+    return;
+  }
 
   buffer[r] = '\0';
 
-  fgaj_t("c%p r%i in >>>\n%s<<< %i\n", eio, con->rqount, buffer, r);
+  fgaj_t("i%p r%i in >>>\n%s<<< %i\n", eio, con->rqount, buffer, r);
 
   ssize_t i = -1;
   if (con->hend < 4) for (i = 0; i < r; ++i)
@@ -78,7 +98,7 @@ static void shv_handle_cb(struct ev_loop *l, struct ev_io *eio, int revents)
     ) ++con->hend; else con->hend = 0;
   }
 
-  fgaj_t("c%p r%i i%i, con->hend %i", eio, con->rqount, i, con->hend);
+  fgaj_t("i%p r%i i%i, con->hend %i", eio, con->rqount, i, con->hend);
 
   if (i < 0)
   {
@@ -110,7 +130,7 @@ static void shv_handle_cb(struct ev_loop *l, struct ev_io *eio, int revents)
     free(head);
 
     fgaj_i(
-      "c%p r%i %s %s %s",
+      "i%p r%i %s %s %s",
       eio, con->rqount,
       inet_ntoa(con->client->sin_addr),
       shv_char_to_method(con->req->method),
@@ -146,7 +166,6 @@ void shv_handle(struct ev_loop *l, struct ev_io *eio)
 
   con->res = shv_response_malloc(404);
 
-  flu_dict *rod = flu_list_malloc();
   int filtering = 0;
   int guarded = 0;
   int handled = 0;
@@ -157,29 +176,27 @@ void shv_handle(struct ev_loop *l, struct ev_io *eio)
 
     if (route == NULL) break; // end reached
 
-    if (route->guard == shv_filter_guard) filtering = 1;
+    if ((void *)route->guard == (void *)shv_filter_guard) filtering = 1;
 
-    if (handled && !filtering) continue;
+    if (handled && ! filtering) continue;
 
-    if (route->guard && route->guard != shv_filter_guard)
+    if (route->guard && (void *)route->guard != (void *)shv_filter_guard)
     {
       filtering = 0;
 
       if (handled) continue;
 
-      guarded = route->guard(con->req, rod, con->res, route->params);
+      guarded = route->guard(con->req, con->res, route->params);
     }
 
     if ( ! (filtering || guarded)) continue;
 
     if (route->handler)
     {
-      int h = route->handler(con->req, rod, con->res, route->params);
+      int h = route->handler(con->req, con->res, route->params);
       if (filtering != 1 && guarded != -1) handled = h;
     }
   }
-
-  flu_list_free_all(rod);
 
   shv_respond(l, eio);
 }
@@ -207,20 +224,28 @@ static void shv_accept_cb(struct ev_loop *l, struct ev_io *eio, int revents)
 
 void shv_serve(int port, shv_route **routes)
 {
+  int r;
+
   struct ev_io *eio = calloc(1, sizeof(struct ev_io));
   struct ev_loop *l = ev_default_loop(0);
 
   int sd = socket(PF_INET, SOCK_STREAM, 0);
-
   if (sd < 0) { fgaj_r("socket error"); exit(1); }
+
+  int v = 1; r = setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &v, sizeof(v));
+  if (r != 0) { fgaj_r("couldn't set SO_REUSEADDR"); exit(1); }
+
+  r = fcntl(sd, F_GETFL);
+  if (r == -1) { fgaj_r("couldn't read main socket flags"); exit(1); }
+
+  r = fcntl(sd, F_SETFL, r | O_NONBLOCK);
+  if (r != 0) { fgaj_r("couldn't set main socket to O_NONBLOCK"); exit(1); }
 
   struct sockaddr_in a;
   memset(&a, 0, sizeof(struct sockaddr_in));
   a.sin_family = AF_INET;
   a.sin_port = htons(port);
   a.sin_addr.s_addr = INADDR_ANY;
-
-  int r;
 
   r = bind(sd, (struct sockaddr *)&a, sizeof(struct sockaddr_in));
   if (r != 0) { fgaj_r("bind error"); exit(2); }

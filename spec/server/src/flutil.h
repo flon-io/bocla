@@ -23,6 +23,8 @@
 // Made in Japan.
 //
 
+// https://github.com/flon-io/flutil
+
 // flutil.h
 
 #ifndef FLON_FLUTIL_H
@@ -33,32 +35,6 @@
 
 
 #define FLU_VERSION "1.0.0"
-
-//
-// str functions
-
-/* Returns 1 if the string s ends with the end string. Returns 0 else.
- */
-int flu_strends(const char *s, const char *end);
-
-/* Returns a copy of the string, trimmed on the right.
- */
-char *flu_strrtrim(const char *s);
-
-/* Returns a trimmed copy of the string, left and right.
- */
-char *flu_strtrim(const char *s);
-
-/* Returns the index of the first occurence of char c in string s.
- * Starts searching at s + off.
- */
-ssize_t flu_index(const char *s, size_t off, char c);
-
-/* Returns the index of the last occurence of char c in string s.
- * Starts searching at s + off.
- * Setting off to -1, is equivalent to setting it to strlen(s) - 1.
- */
-ssize_t flu_rindex(const char *s, ssize_t off, char c);
 
 
 //
@@ -140,18 +116,81 @@ char *flu_sprintf(const char *format, ...);
 /* Given a path, reads the content of the path in a new string.
  * Returns NULL if reading failed for any reason.
  */
-char *flu_readall(const char *path);
+char *flu_readall(const char *path, ...);
+
+char *flu_vreadall(const char *path, va_list ap);
 
 /* Given a file, reads all its content to a new string.
  * Returns NULL if reading failed for any reason.
  */
 char *flu_freadall(FILE *in);
 
+/* Writes a file to disk.
+ * Returns 1 when successful.
+ * Useful when setting up test files
+ */
+int flu_writeall(const char *path, ...);
+
+
+//
+// "path" functions
+
+/* Like unlink(2), but accepts a path format and arguments.
+ * Returns 0 in case of success, like unlink.
+ */
+int flu_unlink(const char *path, ...);
+
+/* Composes a path
+ */
+char *flu_vpath(const char *path, va_list ap);
+
+/* Composes a path.
+ */
+char *flu_path(const char *path, ...);
+
+/* It canonicalizes a path, like realpath().
+ * Unlike realpath(), it doesn't care if the path points to nowhere.
+ */
+char *flu_canopath(const char *path, ...);
+
+/* Given a path, returns its dir path.
+ */
+char *flu_dirname(const char *path, ...);
+
+/* Given a path, returns the file basename.
+ * If a new suffix is given (as a last char * arg) the file suffix
+ * (from the last dot) is replaced with the new_suffix (an example: ".json").
+ * If the new suffix doesn't begin with a dot, NULL is returned.
+ */
+char *flu_basename(const char *path, ...);
+
+/* If the path points to nowhere, returns 0 ('\0').
+ * If the path points to a directory, returns 'd'.
+ * Else returns 'f'.
+ */
+char flu_fstat(const char *path, ...);
+
+/* Moves a file (or a directory). Behaves much like the "mv" user command.
+ * Returns 0 in case of success.
+ *
+ * Basically, the signature is
+ * ```int flu_move(const char *path, const char *destination);```
+ * but one can do
+ * ```flu_move("src/%i/t.c", x, "arch/src/%i/t.c", y)```
+ */
+int flu_move(const char *path, ...);
+
+/* Creates a series of directories.
+ * Expects `int mode` as its last argument.
+ * Like mkdir(3) returns 0 in case of success.
+ */
+int flu_mkdir_p(const char *path, ...);
+
 
 //
 // flu_list
 //
-// a minimal list/stack/set with no ambition
+// a minimal list/stack/set without ambition
 
 typedef struct flu_node {
   struct flu_node *next;
@@ -253,10 +292,14 @@ void flu_list_set(flu_list *l, const char *key, void *item);
  */
 void flu_list_set_last(flu_list *l, const char *key, void *item);
 
+/* Like flu_list_get() but a default is specified.
+ */
+void *flu_list_getd(flu_list *l, const char *key, void *def);
+
 /* Given a key, returns the item bound for it, NULL instead.
  * (O(n)).
  */
-void *flu_list_get(flu_list *l, const char *key);
+#define flu_list_get(l, key) flu_list_getd(l, key, NULL)
 
 /* Returns a trimmed (a unique value per key) version of the given flu_list
  * dictionary. Meant for iterating over key/values.
@@ -274,6 +317,48 @@ flu_list *flu_vd(va_list ap);
  */
 flu_list *flu_d(char *k0, void *v0, ...);
 
+/* Used behind the scenes by flu_sd(). Composes a flu_list dict from the
+ * given va_list. Allows formatted keys and values.
+ */
+flu_list *flu_vsd(va_list ap);
+
+/* Like flu_d() but allows keys and values to be formatted (printf-style).
+ * Values must be strings. Disposed via flu_list_free_all().
+ */
+flu_list *flu_sd(char *k0, ...);
+
+
+//
+// str functions
+
+/* Returns 1 if the string s ends with the end string. Returns 0 else.
+ */
+int flu_strends(const char *s, const char *end);
+
+/* Returns a copy of the string, trimmed on the right.
+ */
+char *flu_strrtrim(const char *s);
+
+/* Returns a trimmed copy of the string, left and right.
+ */
+char *flu_strtrim(const char *s);
+
+/* Returns the index of the first occurence of char c in string s.
+ * Starts searching at s + off.
+ */
+ssize_t flu_index(const char *s, size_t off, char c);
+
+/* Returns the index of the last occurence of char c in string s.
+ * Starts searching at s + off.
+ * Setting off to -1, is equivalent to setting it to strlen(s) - 1.
+ */
+ssize_t flu_rindex(const char *s, ssize_t off, char c);
+
+/* Returns a list of the split chars.
+ * Remember: you'll have to `flu_list_free_all(l)`.
+ */
+flu_list *flu_split(const char *s, const char *delim);
+
 
 //
 // escape
@@ -290,6 +375,9 @@ char *flu_n_escape(const char *s, size_t n);
 char *flu_unescape(const char *s);
 char *flu_n_unescape(const char *s, size_t n);
 
+char *flu_urlencode(const char *s, ssize_t n);
+char *flu_urldecode(const char *s, ssize_t n);
+
 
 //
 // misc
@@ -304,13 +392,26 @@ void flu_die(int exit_value, const char *format, ...);
  */
 char *flu_strdup(char *s);
 
-/* Returns the count of milliseconds (10-3) since the Epoch.
+/* Like system(3), but accepts a format string and arguments.
  */
-long long flu_getms();
+int flu_system(const char *format, ...);
 
-/* Returns the count of microseconds (10-6) since the Epoch.
+/* Popens a cmd and returns the result as a string.
  */
-long long flu_getMs();
+char *flu_plines(const char *cmd, ...);
+
+/* Popens a cmd and returns the result's first line as a string.
+ */
+char *flu_pline(const char *cmd, ...);
+
+/* Like strtoll(3), but accepts a length.
+ * Returns 0 when in doubt.
+ */
+long long flu_stoll(char *s, size_t l, int base);
+
+/* Calls puts() with its argument, then frees it. Returns puts() result.
+ */
+int flu_putf(char *s);
 
 #endif // FLON_FLUTIL_H
 

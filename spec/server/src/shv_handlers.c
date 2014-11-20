@@ -23,80 +23,110 @@
 // Made in Japan.
 //
 
-// handlers, and guards
+// https://github.com/flon-io/shervin
+
+// handlers
 
 #define _POSIX_C_SOURCE 200809L
 
-#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "flutil.h"
+#include "gajeta.h"
 #include "shervin.h"
 #include "shv_protected.h"
 
 
-//
-// guards
-
-int shv_filter_guard(
-  shv_request *req, flu_dict *rod, shv_response *res, flu_dict *params)
+static char *shv_determine_content_type(const char *path)
 {
-  return 1;
+  // TODO: utf-8? "text/html; charset=UTF-8"
+  // TODO: manage that with a conf file
+
+  char *suffix = strrchr(path, '.');
+  char *r = NULL;
+
+  if (suffix == NULL) r = "text/plain";
+  else if (strcmp(suffix, ".txt") == 0) r = "text/plain";
+  else if (strcmp(suffix, ".js") == 0) r = "application/javascript";
+  else if (strcmp(suffix, ".json") == 0) r = "application/json";
+  else if (strcmp(suffix, ".css") == 0) r = "text/css";
+  else if (strcmp(suffix, ".scss") == 0) r = "text/css"; // ?
+  else if (strcmp(suffix, ".html") == 0) r = "text/html";
+  else r = "text/plain";
+
+  return strdup(r);
 }
 
-int shv_any_guard(
-  shv_request *req, flu_dict *rod, shv_response *res, flu_dict *params)
+ssize_t shv_serve_file(
+  shv_response *res, flu_dict *params, const char *path, ...)
 {
-  return 1;
+  va_list ap; va_start(ap, path);
+  char *pa = flu_vpath(path, ap);
+  va_end(ap);
+
+  struct stat sta;
+  if (stat(pa, &sta) != 0) { free(pa); return -1; }
+  if (S_ISDIR(sta.st_mode)) { free(pa); return 0; }
+
+  res->status_code = 200;
+
+  char *h = flu_list_get(params, "header");
+  if (h == NULL) h = flu_list_get(params, "h");
+  if (h == NULL) h = "X-Accel-Redirect";
+
+  flu_list_set(
+    res->headers, "shv_content_length", flu_sprintf("%zu", sta.st_size));
+
+  flu_list_set(
+    res->headers, "content-type", shv_determine_content_type(pa));
+
+  flu_list_set(
+    res->headers, "shv_file", strdup(pa));
+  flu_list_set(
+    res->headers, h, pa);
+
+  return sta.st_size;
 }
 
-int shv_path_guard(
-  shv_request *req, flu_dict *rod, shv_response *res, flu_dict *params)
+int shv_dir_handler(shv_request *req, shv_response *res, flu_dict *params)
 {
-  char *path = (char *)flu_list_get(params, "path");
-  char *rpath = (char *)flu_list_get(req->uri_d, "_path");
+  char *p = flu_list_get(req->routing_d, "**");
+  if (p == NULL) return 0;
 
-  if (path[0] != '/')
+  //fgaj_d("p: %s", p);
+
+  if (strstr(p, "..")) return 0;
+
+  char *r = flu_list_get(params, "root");
+  if (r == NULL) r = flu_list_get(params, "r");
+  if (r == NULL) return 0;
+  //printf("r: %s\n", r);
+
+  char *path = flu_path("%s/%s", r, p);
+
+  ssize_t s = shv_serve_file(res, params, path);
+
+  if (s < 0) { free(path); return 0; }
+
+  if (s == 0)
   {
-    char m = tolower(path[0]);
-    if (tolower(path[1]) == 'u') m = 'u';
-    char rm = req->method;
-    if (rm == 'h') rm = 'g';
-    if (m != rm) return 0;
-    path = strchr(path, ' ') + 1;
+    char *i = flu_list_getd(params, "index", "index.html");
+    flu_list *is = flu_split(i, ",");
+
+    for (flu_node *n = is->first; n; n = n->next)
+    {
+      char *p = flu_path("%s/%s", path, (char *)n->item);
+      s = shv_serve_file(res, params, p);
+      free(p);
+      if (s > 0) break;
+    }
+
+    flu_list_free_all(is);
   }
 
-  int success = 1;
+  free(path);
 
-  while (1)
-  {
-    char *slash = strchr(path, '/');
-    char *rslash = strchr(rpath, '/');
-
-    if (slash == NULL) slash = strchr(path, '\0');
-    if (rslash == NULL) rslash = strchr(rpath, '\0');
-
-    if (path[0] == ':')
-    {
-      char *k = strndup(path + 1, slash - path - 1);
-      flu_list_set(rod, k, strndup(rpath, rslash - rpath));
-      free(k);
-    }
-    else
-    {
-      if (strncmp(path, rpath, slash - path) != 0) { success = 0; break; }
-    }
-
-    if (slash[0] == '\0' && rslash[0] == '\0') break;
-    if (slash[0] == '\0' || rslash[0] == '\0') { success = 0; break; }
-
-    path = slash + 1;
-    rpath = rslash + 1;
-  }
-
-  return success;
+  return s < 1 ? 0 : 1;
 }
-
-//
-// handlers
 

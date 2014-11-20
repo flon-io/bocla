@@ -23,6 +23,8 @@
 // Made in Japan.
 //
 
+// https://github.com/flon-io/gajeta
+
 // gajeta.h
 
 #ifndef FLON_GAJETA_H
@@ -57,6 +59,7 @@ typedef struct fgaj_conf {
   short utc;   // 1 = true, defaults to 0
   char *host;  // defaults to result of gethostname()
   fgaj_logger *logger;  // logger function
+  void *out;            // logging destination
   void *params;         // whatever suits the logger func
 } fgaj_conf;
 
@@ -68,18 +71,31 @@ fgaj_conf *fgaj_conf_get();
  */
 void fgaj_conf_reset();
 
+/* Reads the env and sets the configuration accordingly.
+ * Is called behind the scene, but is available here for cases when
+ * one wants to do custom configuration and then give the env the
+ * last word (by calling this method).
+ */
+void fgaj_read_env();
+
 
 //
 // loggers
 
 /* Default logger function.
  */
-void fgaj_color_stdout_logger(
+void fgaj_color_file_logger(
   char level, const char *subject, const char *msg);
 
-/* Simple logger function. Used for testing.
+/* Simple logger function. Used for testing. Logs to a char[] placed in
+ * fgaj_conf_get()->out
  */
 void fgaj_string_logger(
+  char level, const char *subject, const char *msg);
+
+/* Logger for specs, logging in grey, towards the right side of the screen.
+ */
+void fgaj_grey_logger(
   char level, const char *subject, const char *msg);
 
 
@@ -113,6 +129,23 @@ void fgaj_log(
 #define fgaj_ll(level, subject, ...) \
   fgaj_log(level, subject, -1, NULL, __VA_ARGS__)
 
+//
+// sometimes one wants to log an error at the trace level...
+
+void fgaj_rlog(
+  char level, short err,
+  const char *file, int line, const char *func,
+  const char *format, ...);
+
+#define fgaj_tr(...) \
+  fgaj_rlog('t', 1, __FILE__, __LINE__, __func__, __VA_ARGS__)
+#define fgaj_dr(...) \
+  fgaj_rlog('d', 1, __FILE__, __LINE__, __func__, __VA_ARGS__)
+#define fgaj_ir(...) \
+  fgaj_rlog('i', 1, __FILE__, __LINE__, __func__, __VA_ARGS__)
+#define fgaj_wr(...) \
+  fgaj_rlog('w', 1, __FILE__, __LINE__, __func__, __VA_ARGS__)
+
 
 //
 // helper functions
@@ -132,6 +165,11 @@ void fgaj_level_string_free(char *s);
 /* Turns a level char like 'i', 'W', ... into a numeric level like 30, 40, ...
  */
 char fgaj_normalize_level(char level);
+
+/* Turns a string like 'i', 'info', 'INFO', '30', ... into a numeric level
+ * like 30, 40, ...
+ */
+char fgaj_parse_level(char *s);
 
 /* Returns a (malloc'ed) string detailing the current time.
  */

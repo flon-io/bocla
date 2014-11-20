@@ -23,6 +23,8 @@
 // Made in Japan.
 //
 
+// https://github.com/flon-io/shervin
+
 // shervin.h
 
 #ifndef FLON_SHERVIN_H
@@ -33,17 +35,24 @@
 
 #define SHV_VERSION "1.0.0"
 
+#define SHV_BUFFER_SIZE 4096
+
+
 // request
 
 typedef struct shv_request {
-  long long startMs; // microseconds since the Epoch
+  long long startus; // microseconds since the Epoch
   char method;
   char *uri;
   flu_dict *uri_d;
   flu_dict *headers;
   char *body;
   short status_code; // 4xx code set by shervin, 200 else
+  flu_dict *routing_d; // used by guards to pass info to handlers
 } shv_request;
+
+char shv_method_to_char(char *s);
+char *shv_char_to_method(char c);
 
 // response
 
@@ -55,8 +64,7 @@ typedef struct shv_response {
 
 // route
 
-typedef int shv_handler(
-  shv_request *req, flu_dict *rod, shv_response *res, flu_dict *params);
+typedef int shv_handler(shv_request *req, shv_response *res, flu_dict *params);
 
 typedef struct shv_route {
   shv_handler *guard;
@@ -74,18 +82,19 @@ shv_route *shv_rp(char *path, shv_handler *handler, ...);
 
 /* Merely a marker function, corresponding handlers are called as filters.
  */
-int shv_filter_guard(
-  shv_request *req, flu_dict *rod, shv_response *res, flu_dict *params);
+int shv_filter_guard(shv_request *req, shv_response *res, flu_dict *params);
 
-int shv_any_guard(
-  shv_request *req, flu_dict *rod, shv_response *res, flu_dict *params);
-int shv_path_guard(
-  shv_request *req, flu_dict *rod, shv_response *res, flu_dict *params);
+int shv_any_guard(shv_request *req, shv_response *res, flu_dict *params);
+int shv_path_guard(shv_request *req, shv_response *res, flu_dict *params);
 
 // handlers
 
-int shv_dir_handler(
-  shv_request *req, flu_dict *guard, shv_response *res, flu_dict *params);
+/* Used by shv_dir_handler(), public since it could get useful on its own.
+ */
+ssize_t shv_serve_file(
+  shv_response *res, flu_dict *params, const char *path, ...);
+
+int shv_dir_handler(shv_request *req, shv_response *res, flu_dict *params);
 
 // serving
 

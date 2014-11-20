@@ -34,6 +34,8 @@
 #include "shv_protected.h"
 
 
+  // TODO: use gajeta's grey logger
+  //
 void grey_logger(char level, const char *pref, const char *msg)
 {
   char *lstr = fgaj_level_to_string(level);
@@ -44,7 +46,7 @@ void grey_logger(char level, const char *pref, const char *msg)
 }
 
 static int hello_handler(
-  shv_request *req, flu_dict *rod, shv_response *res, flu_dict *params)
+  shv_request *req, shv_response *res, flu_dict *params)
 {
   res->status_code = 200;
   //flu_list_set(res->headers, "content-type", "text/plain; charset=utf-8");
@@ -55,7 +57,7 @@ static int hello_handler(
 }
 
 static int mirror_handler(
-  shv_request *req, flu_dict *rod, shv_response *res, flu_dict *params)
+  shv_request *req, shv_response *res, flu_dict *params)
 {
   res->status_code = 200;
   //flu_list_set(res->headers, "content-type", "text/plain; charset=utf-8");
@@ -80,7 +82,7 @@ static int mirror_handler(
 }
 
 static int delete_handler(
-  shv_request *req, flu_dict *rod, shv_response *res, flu_dict *params)
+  shv_request *req, shv_response *res, flu_dict *params)
 {
   res->status_code = 200;
   //flu_list_set(res->headers, "content-type", "text/plain; charset=utf-8");
@@ -91,7 +93,7 @@ static int delete_handler(
 }
 
 static int null_handler(
-  shv_request *req, flu_dict *rod, shv_response *res, flu_dict *params)
+  shv_request *req, shv_response *res, flu_dict *params)
 {
   res->status_code = 200;
 

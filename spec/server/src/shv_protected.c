@@ -23,13 +23,15 @@
 // Made in Japan.
 //
 
+// https://github.com/flon-io/shervin
+
 #define _POSIX_C_SOURCE 200809L
 
 #include <stdlib.h>
 #include <string.h>
 #include <netinet/in.h>
 
-//#include "gajeta.h"
+#include "flutim.h"
 #include "shv_protected.h"
 
 
@@ -74,7 +76,7 @@ shv_con *shv_con_malloc(struct sockaddr_in *client, shv_route **routes)
 {
   shv_con *c = calloc(1, sizeof(shv_con));
   c->client = client;
-  c->startMs = flu_getMs();
+  c->startus = flu_gets('u');
   c->routes = routes;
   shv_con_reset(c);
   c->rqount = -1;
