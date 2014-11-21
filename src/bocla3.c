@@ -217,7 +217,16 @@ static fcla_response *request(
   //  printf("  * \"%s\": \"%s\"\n", n->key, (char *)n->item);
   //}
 
-  char *uri = flu_sprintf("https://%s%s%s", host, path, query);
+  char *uri = NULL;
+
+  // TODO: s3.amazonaws.com/s3.your-domain.com/object
+  //         if . in bucket name
+
+  if (c->bucket && strcmp(path, "/") != 0)
+    uri = flu_sprintf("https://%s.%s%s%s", c->bucket, host, path, query);
+  else
+    uri = flu_sprintf("https://%s%s%s", host, path, query);
+  printf("uri: >%s<\n", uri);
 
   fcla_response *res = fcla_do_request(meth, uri, headers, NULL, NULL);
 
@@ -241,6 +250,17 @@ flu_list *fcla3_list_buckets(fcla3_context *c)
 
 char *fcla3_read(fcla3_context *c, const char *fname, ...)
 {
-  return NULL;
+  va_list ap; va_start(ap, fname);
+  flu_sbuffer *b = flu_sbuffer_malloc();
+  flu_sbputs(b, "/");
+  flu_sbvprintf(b, fname, ap);
+  char *f = flu_sbuffer_to_string(b);
+  va_end(ap);
+
+  fcla_response *res = request(c, 'g', f, "", NULL, NULL);
+
+  free(f);
+
+  return res->status_code == 200 ? strdup(res->body) : NULL;
 }
 

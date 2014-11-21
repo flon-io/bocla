@@ -61,6 +61,8 @@ describe "bocla3"
   {
     it "reads a file from S3 and returns it as a char*"
     {
+      c->bucket = rdz_strdup("flon-io");
+
       char *s = fcla3_read(c, "test0.txt");
 
       expect(c->last_response != NULL);
