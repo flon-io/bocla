@@ -71,6 +71,15 @@ describe "bocla3"
     }
 
     it "accepts a bucket name as prefix>"
+    {
+      c->bucket = rdz_strdup("flon.io");
+
+      char *s = fcla3_read(c, "flon-io>test0.txt");
+
+      expect(c->last_response != NULL);
+      expect(c->last_response->status_code i== 200);
+      expect(s === "flon is a kind of interpreter");
+    }
   }
 
   describe "fcla3_download()"

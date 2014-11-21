@@ -103,9 +103,17 @@ static char *canonicalize_resource(
 {
   flu_sbuffer *b = flu_sbuffer_malloc();
 
-  if (c->bucket) flu_sbprintf(b, "/%s", c->bucket);
-  flu_sbputs(b, path);
-  if (strstr(query, "delete=")) flu_sbputs(b, "?delete");
+  if (c->tmp_bucket || c->bucket)
+  {
+    flu_sbprintf(b, "/%s", c->tmp_bucket ? c->tmp_bucket : c->bucket);
+  }
+
+  flu_sbprintf(b, "/%s", path);
+
+  if (strstr(query, "delete="))
+  {
+    flu_sbputs(b, "?delete");
+  }
 
   return flu_sbuffer_to_string(b);
 }
@@ -227,9 +235,14 @@ static fcla_response *request(
   //         if . in bucket name
 
   if (c->bucket && strcmp(path, "/") != 0)
-    uri = flu_sprintf("https://%s.%s%s%s", c->bucket, host, path, query);
+    uri = flu_sprintf(
+      "https://%s.%s/%s%s",
+      c->tmp_bucket ? c->tmp_bucket : c->bucket, host, path, query);
   else
-    uri = flu_sprintf("https://%s%s%s", host, path, query);
+    uri = flu_sprintf(
+      "https://%s/%s%s",
+      host, path, query);
+  //
   //printf("uri: >%s<\n", uri);
 
   fcla_response *res = fcla_do_request(meth, uri, headers, NULL, NULL);
@@ -242,7 +255,7 @@ static fcla_response *request(
 
   free(host);
 
-  if (res->status_code != 307) return res;
+  if (res->status_code != 307) { c->tmp_bucket = NULL; return res; }
 
   char *loc = flu_list_get(res->headers, "Location");
   char *a = strstr(loc, ".s3-");
@@ -255,7 +268,7 @@ static fcla_response *request(
 
 flu_list *fcla3_list_buckets(fcla3_context *c)
 {
-  fcla_response *res = request(c, 'g', "/", "", NULL, NULL, 0);
+  fcla_response *res = request(c, 'g', "", "", NULL, NULL, 0);
 
   return extract(res->body, "Name");
 }
@@ -264,12 +277,16 @@ char *fcla3_read(fcla3_context *c, const char *fname, ...)
 {
   va_list ap; va_start(ap, fname);
   flu_sbuffer *b = flu_sbuffer_malloc();
-  flu_sbputs(b, "/");
   flu_sbvprintf(b, fname, ap);
   char *f = flu_sbuffer_to_string(b);
   va_end(ap);
 
-  fcla_response *res = request(c, 'g', f, "", NULL, NULL, 0);
+  char *gt = strchr(f, '>');
+  if (gt) { *gt = 0; c->tmp_bucket = f; }
+  //printf("c->tmpbucket >%s<\n", c->tmp_bucket);
+  //printf("f            >%s<\n", gt ? gt + 1 : f);
+
+  fcla_response *res = request(c, 'g', gt ? gt + 1 : f, "", NULL, NULL, 0);
 
   free(f);
 
