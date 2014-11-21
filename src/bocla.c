@@ -54,9 +54,9 @@ char *fcla_response_to_s(fcla_response *r)
 
 void fcla_response_free(fcla_response *r)
 {
-  //if (r->headers != NULL) flu_list_free(r->headers); // not enough
+  if (r == NULL) return; // like free() does
   if (r->headers != NULL) flu_list_and_items_free(r->headers, free);
-  if (r->body != NULL) free(r->body);
+  free(r->body);
   free(r);
 }
 
@@ -96,7 +96,7 @@ flu_list *fcla_extract_headers(char *head)
   return l;
 }
 
-static fcla_response *fcla_request(
+fcla_response *fcla_do_request(
   char meth,
   char *uri,
   flu_list *headers,
@@ -216,7 +216,7 @@ fcla_response *fcla_ghd(char meth, char hstyle, char *uri, ...)
 
   va_end(ap);
 
-  fcla_response *r = fcla_request(meth, u, h, NULL, NULL);
+  fcla_response *r = fcla_do_request(meth, u, h, NULL, NULL);
 
   free(u);
   if (hstyle == 'd') flu_list_free_all(h);
@@ -252,7 +252,7 @@ fcla_response *fcla_popu(char meth, char hstyle, char bstyle, char *uri, ...)
     // TODO: error handling
   }
 
-  fcla_response *r = fcla_request(meth, u, h, f ? NULL : s, f);
+  fcla_response *r = fcla_do_request(meth, u, h, f ? NULL : s, f);
 
   free(u);
   free(s);

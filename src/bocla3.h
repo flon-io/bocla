@@ -30,18 +30,21 @@
 #ifndef FLON_BOCLA3_H
 #define FLON_BOCLA3_H
 
-//#include "flutil.h"
+#include "bocla.h"
+
 
 typedef struct {
   char *endpoint; // usually "s3"
   char *aki;
   char *sak;
   char *bucket;
+  fcla_response *last_response;
 } fcla3_context;
 
 void fcla3_context_free(fcla3_context *c);
 
 flu_list *fcla3_list_buckets(fcla3_context *c);
+char *fcla3_read(fcla3_context *c, const char *fname, ...);
 
 #endif // FLON_BOCLA3_H
 

@@ -18,9 +18,9 @@ describe "bocla3"
     fcla3_context *c = calloc(1, sizeof(fcla3_context));
     c->endpoint = rdz_strdup("s3");
 
-    char *s = flu_readall("../.aws");
+    char *credentials = flu_readall("../.aws");
 
-    char *a = strstr(s, ":") + 1; if (*a == ' ') ++a;
+    char *a = strstr(credentials, ":") + 1; if (*a == ' ') ++a;
     char *b = strchr(a, '\n');
     c->aki = rdz_strndup(a, b - a - 1);
 
@@ -28,28 +28,53 @@ describe "bocla3"
     b = strchr(a, '\n');
     c->sak = rdz_strndup(a, b - a - 1);
 
-    free(s); s = NULL;
+    free(credentials); credentials = NULL;
   }
   after each
   {
     fcla3_context_free(c);
   }
 
-  it "lists buckets"
+  describe "fcla3_list_buckets()"
   {
-    flu_list *l = fcla3_list_buckets(c);
-
-    int success = 0;
-
-    for (flu_node *n = l->first; n; n = n->next)
+    it "lists S3 buckets"
     {
-      //printf("* >%s<\n", (char *)n->item);
-      if (strcmp((char *)n->item, "flon.io") == 0) success = 1;
+      flu_list *l = fcla3_list_buckets(c);
+
+      expect(c->last_response->status_code i== 200);
+
+      int success = 0;
+
+      for (flu_node *n = l->first; n; n = n->next)
+      {
+        //printf("* >%s<\n", (char *)n->item);
+        if (strcmp((char *)n->item, "flon.io") == 0) success = 1;
+      }
+
+      expect(success i== 1);
+
+      flu_list_free_all(l);
+    }
+  }
+
+  describe "fcla3_read()"
+  {
+    it "reads a file from S3 and returns it as a char*"
+    {
+      char *s = fcla3_read(c, "test0.txt");
+
+      expect(c->last_response != NULL);
+      expect(c->last_response->status_code i== 200);
+      expect(s === "flon is a kind of interpreter");
     }
 
-    expect(success i== 1);
+    it "accepts a bucket name as prefix>"
+  }
 
-    flu_list_free_all(l);
+  describe "fcla3_download()"
+  {
+    it "reads a file from S3 and writes it to file locally"
+    it "accepts a bucket name as prefix>"
   }
 }
 

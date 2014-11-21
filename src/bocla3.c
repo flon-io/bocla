@@ -45,9 +45,12 @@ void fcla3_context_free(fcla3_context *c)
   free(c->aki);
   free(c->sak);
   free(c->bucket);
+  fcla_response_free(c->last_response);
   free(c);
 }
 
+  // TODO: make that flu_strcmp() maybe...
+  //
 static int _strcmp(const void *a, const void *b)
 {
   return strcmp((char *)a, (char *)b);
@@ -109,13 +112,17 @@ static char *canonicalize_resource(
 
 static char *string_to_sign(
   fcla3_context *c,
-  char *meth,
+  char meth,
   char *host, char *path, char *query,
   flu_dict *headers)
 {
   flu_sbuffer *b = flu_sbuffer_malloc();
 
-  flu_sbprintf(b, "%s\n", meth);
+  if (meth == 'g') flu_sbputs(b, "GET\n");
+  else if (meth == 'p') flu_sbputs(b, "POST\n");
+  else if (meth == 'u') flu_sbputs(b, "PUT\n");
+  else if (meth == 'd') flu_sbputs(b, "DELETE\n");
+  else flu_sbputs(b, "HEAD\n"); // :-p
 
   flu_sbprintf(b, "%s\n", flu_list_getd(headers, "content-md5", ""));
   flu_sbprintf(b, "%s\n", flu_list_getd(headers, "content-type", ""));
@@ -132,7 +139,7 @@ static char *string_to_sign(
 
 static void sign(
   fcla3_context *c,
-  char *meth, char *host, char *path, char *query,
+  char meth, char *host, char *path, char *query,
   flu_dict *headers,
   char *body, size_t bodyl)
 {
@@ -168,12 +175,6 @@ static void sign(
   free(sig);
 
   flu_list_set(headers, "authorization", auth);
-
-  //printf("https://%s%s%s // req headers:\n", host, path, query);
-  //for (flu_node *n = headers->first; n; n = n->next)
-  //{
-  //  printf("  * \"%s\": \"%s\"\n", n->key, (char *)n->item);
-  //}
 }
 
 static flu_list *extract(char *body, char *key)
@@ -199,30 +200,47 @@ static flu_list *extract(char *body, char *key)
   return r;
 }
 
-flu_list *fcla3_list_buckets(fcla3_context *c)
+static fcla_response *request(
+  fcla3_context *c,
+  char meth, char *path, char *query,
+  char *sbody, FILE *fbody)
 {
+  char *host = flu_sprintf("%s.amazonaws.com", c->endpoint);
+
   flu_list *headers = flu_list_malloc();
 
-  char *host = flu_sprintf("%s.amazonaws.com", c->endpoint);
-  char *path = "/";
-  char *query = "";
+  sign(c, meth, host, path, query, headers, NULL, 0);
 
-  sign(c, "GET", host, path, query, headers, NULL, 0);
+  //printf("https://%s%s%s // req headers:\n", host, path, query);
+  //for (flu_node *n = headers->first; n; n = n->next)
+  //{
+  //  printf("  * \"%s\": \"%s\"\n", n->key, (char *)n->item);
+  //}
 
-  fcla_response *res =
-    fcla_get_h("https://%s%s%s", host, path, query, headers);
+  char *uri = flu_sprintf("https://%s%s%s", host, path, query);
 
-  // TODO: keep last response in context...
+  fcla_response *res = fcla_do_request(meth, uri, headers, NULL, NULL);
 
+  flu_list_free_all(headers);
+
+  fcla_response_free(c->last_response);
+  c->last_response = res;
   //flu_putf(fcla_response_to_s(res));
 
   free(host);
-  flu_list_free_all(headers);
 
-  flu_list *r = extract(res->body, "Name");
+  return res;
+}
 
-  fcla_response_free(res);
+flu_list *fcla3_list_buckets(fcla3_context *c)
+{
+  fcla_response *res = request(c, 'g', "/", "", NULL, NULL);
 
-  return r;
+  return extract(res->body, "Name");
+}
+
+char *fcla3_read(fcla3_context *c, const char *fname, ...)
+{
+  return NULL;
 }
 

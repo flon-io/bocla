@@ -99,6 +99,12 @@ fcla_response *fcla_popu(char meth, char hstyle, char bstyle, char *uri, ...);
 #define fcla_post_fd(uri, ...) fcla_popu('p', 'd', 'f', uri, __VA_ARGS__)
 #define fcla_put_fd(uri, ...) fcla_popu('u', 'd', 'f', uri, __VA_ARGS__)
 
+/* The method behind all the requests.
+ * Exposed here since it's used by bocla3.
+ */
+fcla_response *fcla_do_request(
+  char meth, char *uri, flu_list *headers, char *sbody, FILE *fbody);
+
 
 //
 // helpers
