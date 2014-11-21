@@ -82,10 +82,15 @@ describe "bocla3"
     }
   }
 
-  describe "fcla3_download()"
+  describe "fcla3_fetch()"
   {
     it "reads a file from S3 and writes it to file locally"
     it "accepts a bucket name as prefix>"
+  }
+
+  describe "fcla3_list()"
+  {
+    it "lists the files in the bucket"
   }
 }
 
