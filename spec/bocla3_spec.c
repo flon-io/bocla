@@ -44,7 +44,7 @@ describe "bocla3"
     for (flu_node *n = l->first; n; n = n->next)
     {
       //printf("* >%s<\n", (char *)n->item);
-      if (strcmp((char *)n->item, "operati.ca") == 0) success = 1;
+      if (strcmp((char *)n->item, "flon.io") == 0) success = 1;
     }
 
     expect(success i== 1);
