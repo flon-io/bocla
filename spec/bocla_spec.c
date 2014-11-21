@@ -176,6 +176,7 @@ describe "bocla"
     }
 
     it "doesn't create the target file in case of error"
+    it "returns an error message if it cannot open the file (for writing)"
   }
 
   describe "fcla_head()"
