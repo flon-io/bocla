@@ -135,7 +135,7 @@ fcla_response *fcla_do_request(
   if (dpath)
   {
     dfile = fopen(dpath, "w");
-    if (dfile == NULL) { res->body = "fail to open target file"; goto _done; }
+    if (dfile == NULL) { res->body = "failed to open target file"; goto _done; }
   }
   else
   {
