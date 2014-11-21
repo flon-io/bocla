@@ -148,21 +148,37 @@ fcla_response *fcla_do_request(
     }
   }
 
-  if (headers && flu_list_get(headers, "_u"))
-  {
-    char *us = flu_list_get(headers, "_u");
-    char *pa = flu_list_get(headers, "_p"); if (pa == NULL) pa = "";
-
-    curl_easy_setopt(curl, CURLOPT_USERNAME, us);
-    curl_easy_setopt(curl, CURLOPT_PASSWORD, pa);
-  }
-
   if (headers != NULL)
   {
+    // basic auth
+
+    char *us = flu_list_get(headers, "_u");
+    if (us)
+    {
+      char *pa = flu_list_get(headers, "_p"); if (pa == NULL) pa = "";
+
+      curl_easy_setopt(curl, CURLOPT_USERNAME, us);
+      curl_easy_setopt(curl, CURLOPT_PASSWORD, pa);
+    }
+
+    // verbose?
+
+    char *v = flu_list_get(headers, "_v");
+    if (v && (*v == 'y' || *v == 't' || *v == '1'))
+    {
+      curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
+    }
+
+    // pass headers to libcurl
+
     flu_list *tl = flu_list_dtrim(headers);
     for (flu_node *n = tl->first; n != NULL; n = n->next)
     {
-      if (*n->key == '_' && (n->key[1] == 'u' || n->key[1] == 'p')) continue;
+      if (
+        *n->key == '_' &&
+        (n->key[1] == 'u' || n->key[1] == 'p' || n->key[1] == 'v')
+      ) continue;
+
       char *s = flu_sprintf("%s: %s", n->key, (char *)n->item);
       cheaders = curl_slist_append(cheaders, s);
       free(s);
@@ -170,8 +186,6 @@ fcla_response *fcla_do_request(
     flu_list_free(tl);
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, cheaders);
   }
-
-  //curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
 
   CURLcode r = curl_easy_perform(curl);
 

@@ -214,6 +214,8 @@ static fcla_response *request(
 
   flu_list *headers = flu_list_malloc();
 
+  //flu_list_set(headers, "_v", strdup("true"));
+
   sign(c, meth, host, path, query, headers, NULL, 0);
 
   //printf("https://%s%s%s // req headers:\n", host, path, query);
