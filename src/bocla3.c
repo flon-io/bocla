@@ -203,9 +203,13 @@ static flu_list *extract(char *body, char *key)
 static fcla_response *request(
   fcla3_context *c,
   char meth, char *path, char *query,
-  char *sbody, FILE *fbody)
+  char *sbody, FILE *fbody,
+  size_t rcount)
 {
-  char *host = flu_sprintf("%s.amazonaws.com", c->endpoint);
+  char *host = flu_sprintf(
+    "%s.amazonaws.com",
+    c->tmp_endpoint ? c->tmp_endpoint : c->endpoint);
+  c->tmp_endpoint = NULL;
 
   flu_list *headers = flu_list_malloc();
 
@@ -226,7 +230,7 @@ static fcla_response *request(
     uri = flu_sprintf("https://%s.%s%s%s", c->bucket, host, path, query);
   else
     uri = flu_sprintf("https://%s%s%s", host, path, query);
-  printf("uri: >%s<\n", uri);
+  //printf("uri: >%s<\n", uri);
 
   fcla_response *res = fcla_do_request(meth, uri, headers, NULL, NULL);
 
@@ -238,12 +242,20 @@ static fcla_response *request(
 
   free(host);
 
-  return res;
+  if (res->status_code != 307) return res;
+
+  char *loc = flu_list_get(res->headers, "Location");
+  char *a = strstr(loc, ".s3-");
+  char *b = strstr(a, ".amazonaws.com/");
+  c->tmp_endpoint = strndup(a + 1, b - a - 1);
+  //printf("tmp_endpoint: >%s<\n", c->tmp_endpoint);
+
+  return request(c, meth, path, query, sbody, fbody, rcount + 1);
 }
 
 flu_list *fcla3_list_buckets(fcla3_context *c)
 {
-  fcla_response *res = request(c, 'g', "/", "", NULL, NULL);
+  fcla_response *res = request(c, 'g', "/", "", NULL, NULL, 0);
 
   return extract(res->body, "Name");
 }
@@ -257,7 +269,7 @@ char *fcla3_read(fcla3_context *c, const char *fname, ...)
   char *f = flu_sbuffer_to_string(b);
   va_end(ap);
 
-  fcla_response *res = request(c, 'g', f, "", NULL, NULL);
+  fcla_response *res = request(c, 'g', f, "", NULL, NULL, 0);
 
   free(f);
 

@@ -34,10 +34,12 @@
 
 
 typedef struct {
-  char *endpoint; // usually "s3"
   char *aki;
   char *sak;
+  char *endpoint; // usually "s3"
+  char *tmp_endpoint;
   char *bucket;
+  char *tmp_bucket;
   fcla_response *last_response;
 } fcla3_context;
 
