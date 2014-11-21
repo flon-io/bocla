@@ -7,20 +7,11 @@
 
 #include "bocla.h"
 
-#include "../spec/server/servman.h"
+//#include "../spec/server/servman.h"
 
 
 describe "bocla"
 {
-  before all
-  {
-    server_start();
-  }
-  after all
-  {
-    server_stop();
-  }
-
   before each
   {
     fcla_response *res = NULL;
@@ -34,12 +25,12 @@ describe "bocla"
   {
     res = fcla_get("http://www.example.com:4567");
 
-    ensure(res->status_code == -1);
+    expect(res->status_code == -1);
 
-    ensure(
+    expect(
       strcmp(res->body, "connect() timed out!") == 0 ||
       strncmp(res->body, "Failed to connect to ", 21) == 0);
-    //ensure(
+    //expect(
     //  res->body === "connect() timed out!" ||
     //  res->body ^== "Failed to connect to ");
       // rodzo can't deal with that...
@@ -48,67 +39,45 @@ describe "bocla"
   it "set Authorization: Basic u:p when passed '_u' (and '_p')"
   {
     res = fcla_get_d(
-      "http://127.0.0.1:4567/mirror",
+      "http://httpbin.org/basic-auth/john/wyvern",
       "_u", "john", "_p", "wyvern", NULL);
 
-    ensure(res->status_code == 200);
+    expect(res->status_code i== 200);
 
-    ensure(res->body != NULL);
+    expect(res->body != NULL);
 
     //printf("\n%s\n", res->body);
-    flu_list *d = fcla_extract_headers(res->body);
-
-    ensure(flu_list_get(d, "path") === "/mirror");
-    ensure(flu_list_get(d, "method") === "GET");
-    ensure(flu_list_get(d, "authorization") === "Basic am9objp3eXZlcm4=");
-    ensure(flu_list_get(d, "_u") == NULL);
-    ensure(flu_list_get(d, "_p") == NULL);
-
-    flu_list_and_items_free(d, free);
+    expect(res->body >=== "\"authenticated\": true,");
+    expect(res->body >=== "\"user\": \"john\"");
   }
 
   describe "fcla_get()"
   {
     it "gets 200"
     {
-      res = fcla_get("http://127.0.0.1:4567/hello");
+      res = fcla_get("http://httpbin.org/");
 
-      ensure(res->status_code == 200);
-      ensure(res->body === "**hello world**\n");
-      ensure(flu_list_get(res->headers, "content-length") === "16");
+      expect(res->status_code == 200);
+      //puts(res->body);
+      expect(res->body >=== "Testing an HTTP Library can become difficult");
+      expect(flu_list_get(res->headers, "Content-Length") === "10806");
     }
 
     it "gets 404"
     {
-      res = fcla_get("http://127.0.0.1:4567/nada");
+      res = fcla_get("http://httpbin.org/status/404");
 
-      ensure(res->status_code == 404);
-      ensure(res->body === "");
-    }
-
-    it "gets /mirror"
-    {
-      res = fcla_get("http://127.0.0.1:4567/mirror");
-
-      ensure(res->status_code == 200);
-
-      ensure(res->body != NULL);
-
-      //printf("\n%s\n", res->body);
-      flu_list *d = fcla_extract_headers(res->body);
-
-      ensure(flu_list_get(d, "path") === "/mirror");
-      ensure(flu_list_get(d, "method") === "GET");
-
-      flu_list_and_items_free(d, free);
+      expect(res->status_code == 404);
+      expect(res->body === "");
     }
 
     it "composes its uri"
     {
-      res = fcla_get("http://127.0.0.1:4567/%so", "hell");
+      res = fcla_get("http://httpbin.org/%s", "headers");
 
-      ensure(res->status_code == 200);
-      ensure(res->body === "**hello world**\n");
+      expect(res->status_code == 200);
+      //puts(res->body);
+      expect(res->body >=== "\"headers\":");
     }
   }
 
@@ -118,17 +87,13 @@ describe "bocla"
     {
       flu_list *hs = flu_d("user-agent", "flon bocla 0.x", NULL);
       //
-      res = fcla_get_h("http://127.0.0.1:4567/mirror", hs);
+      res = fcla_get_h("http://httpbin.org/get", hs);
 
-      ensure(res != NULL);
-      ensure(res->body != NULL);
+      expect(res != NULL);
+      expect(res->body != NULL);
 
       //printf("\n%s\n", res->body);
-      flu_list *d = fcla_extract_headers(res->body);
-
-      ensure(flu_list_get(d, "user-agent") === "flon bocla 0.x");
-
-      flu_list_and_items_free(d, free);
+      expect(res->body >== "\"User-Agent\": \"flon bocla 0.x\"");
 
       flu_list_free(hs);
         // the values are not on the heap, no need to use _and_items_free()
@@ -138,13 +103,13 @@ describe "bocla"
     {
       flu_list *hs = flu_d("user-agent", "flon bocla 0.x", NULL);
       //
-      res = fcla_get_h("http://127.0.0.1:4567/%s", "mirror", hs);
+      res = fcla_get_h("http://httpbin.org/%s", "get?show_env=1", hs);
 
-      ensure(res != NULL);
-      ensure(res->body != NULL);
+      expect(res != NULL);
+      expect(res->body != NULL);
 
       //printf("\n%s\n", res->body);
-      expect(strstr(res->body, "user-agent: flon bocla 0.x") != NULL);
+      expect(res->body >== "\"User-Agent\": \"flon bocla 0.x\"");
 
       flu_list_free(hs);
         // the values are not on the heap, no need to use _and_items_free()
@@ -156,30 +121,30 @@ describe "bocla"
     it "composes uri and then collect header entries"
     {
       res = fcla_get_d(
-        "http://127.0.0.1:4567/%s", "mirror",
+        "http://httpbin.org/get%s", "?show_env=1",
         "user-agent", "flon bocla 0.x", NULL);
 
-      ensure(res != NULL);
-      ensure(res->body != NULL);
+      expect(res != NULL);
+      expect(res->body != NULL);
 
       //printf("\n%s\n", res->body);
-      expect(strstr(res->body, "user-agent: flon bocla 0.x") != NULL);
+      expect(res->body >== "\"User-Agent\": \"flon bocla 0.x\"");
     }
 
     it "composes its header entries"
     {
       res = fcla_get_d(
-        "http://127.0.0.1:4567/%s", "mirror",
+        "http://httpbin.org/get%s", "?show_env=1",
         "user-agent", "flon bocla 7.%i", 9,
         "x-bocla-auth", "na%s", "da",
         NULL);
 
-      ensure(res != NULL);
-      ensure(res->body != NULL);
+      expect(res != NULL);
+      expect(res->body != NULL);
 
       //printf("\n%s\n", res->body);
-      expect(strstr(res->body, "\r\nuser-agent: flon bocla 7.9\r\n") != NULL);
-      expect(strstr(res->body, "\r\nx-bocla-auth: nada\r\n") != NULL);
+      expect(res->body >== "\"User-Agent\": \"flon bocla 7.9\"");
+      expect(res->body >== "\"X-Bocla-Auth\": \"nada\"");
     }
   }
 
@@ -187,11 +152,12 @@ describe "bocla"
   {
     it "heads 200"
     {
-      res = fcla_head("http://127.0.0.1:4567/hello");
+      res = fcla_head("http://httpbin.org/?show_env=1");
 
-      ensure(res->status_code == 200);
-      ensure(res->body === "");
-      ensure(flu_list_get(res->headers, "content-length") === "16");
+      //printf("\n>>>\n%s\n<<<\n", res->body);
+      expect(res->status_code i== 200);
+      expect(res->body === "");
+      expect(flu_list_get(res->headers, "Content-Length") === "10806");
     }
   }
 
@@ -199,11 +165,11 @@ describe "bocla"
   {
     it "deletes 200"
     {
-      res = fcla_delete("http://127.0.0.1:4567/d");
+      res = fcla_delete("http://httpbin.org/delete?show_env=1");
 
-      ensure(res->status_code == 200);
-      ensure(res->body === "deleted.");
-      ensure(flu_list_get(res->headers, "content-length") === "8");
+      //printf("\n>>>\n%s\n<<<\n", res->body);
+      expect(res->status_code i== 200);
+      expect(res->body >== "\"url\": \"http://httpbin.org/delete?show_env=1\"");
     }
   }
 
@@ -211,22 +177,12 @@ describe "bocla"
   {
     it "posts"
     {
-      res = fcla_post("http://127.0.0.1:4567/mirror", NULL, "hello\nworld.");
+      res = fcla_post(
+        "http://httpbin.org/post?show_env=1", NULL, "hello\nworld.");
 
       //printf("\n>>>\n%s\n<<<\n", res->body);
-
-      ensure(res->status_code == 200);
-      ensure(res->body $== "\r\n\r\nhello\nworld.");
-    }
-
-    it "posts to /null"
-    {
-      res = fcla_post("http://127.0.0.1:4567/null", NULL, "nada.");
-
-      //printf("\n>>>\n%s\n<<<\n", res->body);
-
-      ensure(res->status_code == 200);
-      ensure(res->body === "ok.");
+      expect(res->status_code i== 200);
+      expect(res->body >== "\"form\": {\n    \"hello\\nworld.\"");
     }
   }
 
@@ -234,12 +190,12 @@ describe "bocla"
   {
     it "posts"
     {
-      res = fcla_post_f("http://127.0.0.1:4567/mirror", NULL, __FILE__);
+      res = fcla_post_f(
+        "http://httpbin.org/post?show_env=1", NULL, "../Makefile");
 
       //printf("\n>>>\n%s\n<<<\n", res->body);
-
-      ensure(res->status_code == 200);
-      ensure(strstr(res->body, "spec/bocla_spec.c") != NULL);
+      expect(res->status_code i== 100);
+      expect(res->body >== "NAME=bocla");
     }
   }
 
@@ -250,15 +206,15 @@ describe "bocla"
       flu_dict *h = flu_d("user-agent", "post-h", NULL);
 
       res = fcla_post_h(
-        "http://127.0.0.1:4567/mir%sr", "ro",
+        "http://httpbin.org/%s?show_env=1", "post",
         "hello%sworld.", "\n",
         h);
 
       //printf("\n>>>\n%s\n<<<\n", res->body);
-
       expect(res != NULL);
-      expect(res->status_code == 200);
-      expect(strstr(res->body, "\r\nuser-agent: post-h\r\n") != NULL);
+      expect(res->status_code i== 200);
+      expect(res->body >== "\"hello\\nworld.\"");
+      expect(res->body >== "\"User-Agent\": \"post-h\"");
 
       flu_list_free(h);
     }
@@ -271,16 +227,15 @@ describe "bocla"
       flu_dict *h = flu_d("user-agent", "post-fh", NULL);
 
       res = fcla_post_fh(
-        "http://127.0.0.1:4567/mir%sr", "ro",
-        __FILE__,
+        "http://httpbin.org/%s?show_env=1", "post",
+        "../Makefile",
         h);
 
       //printf("\n>>>\n%s\n<<<\n", res->body);
-
       expect(res != NULL);
-      expect(res->status_code == 200);
-      expect(strstr(res->body, "\r\nuser-agent: post-fh\r\n") != NULL);
-      expect(strstr(res->body, "\n// Fri Sep  5 05:37:45 JST 2014\n") != NULL);
+      expect(res->status_code i== 100);
+      expect(res->body >== "NAME=bocla");
+      expect(res->body >== "\"User-Agent\": \"post-fh\"");
 
       flu_list_free(h);
     }
@@ -291,15 +246,15 @@ describe "bocla"
     it "posts"
     {
       res = fcla_post_d(
-        "http://127.0.0.1:4567/mir%sr", "ro",
+        "http://httpbin.org/%s?show_env=1", "post",
         "hello%sworld.", "\n",
         "user-%s", "agent", "post-%s", "d", NULL);
 
       //printf("\n>>>\n%s\n<<<\n", res->body);
-
-      ensure(res != NULL);
-      ensure(res->status_code == 200);
-      ensure(strstr(res->body, "\r\nuser-agent: post-d\r\n") != NULL);
+      expect(res != NULL);
+      expect(res->status_code i== 200);
+      expect(res->body >== "hello\\nworld");
+      expect(res->body >== "\"User-Agent\": \"post-d\"");
     }
   }
 
@@ -308,16 +263,15 @@ describe "bocla"
     it "posts"
     {
       res = fcla_post_fd(
-        "http://127.0.0.1:4567/mir%sr", "ro",
-        __FILE__,
+        "http://httpbin.org/post%s", "?show_env=1",
+        "../Makefile",
         "user-%s", "agent", "post-%s", "d", NULL);
 
       //printf("\n>>>\n%s\n<<<\n", res->body);
-
-      ensure(res != NULL);
-      ensure(res->status_code == 200);
-      ensure(strstr(res->body, "\r\nuser-agent: post-d\r\n") != NULL);
-      expect(strstr(res->body, "\n// Fri Sep  5 05:37:45 JST 2014\n") != NULL);
+      expect(res != NULL);
+      expect(res->status_code i== 100);
+      expect(res->body >== "NAME=bocla");
+      expect(res->body >== "spec clean upgrade");
     }
   }
 
@@ -325,13 +279,12 @@ describe "bocla"
   {
     it "puts"
     {
-      res = fcla_put("http://127.0.0.1:4567/mirror", NULL, "put put put");
+      res = fcla_put("http://httpbin.org/put?show_env=1", NULL, "put put put");
 
       //printf("\n>>>\n%s\n<<<\n", res->body);
-
-      ensure(res->status_code == 200);
-      ensure(res->body ^== "PUT /mirror HTTP/1.1\r\n");
-      ensure(res->body $== "\r\n\r\nput put put");
+      expect(res->status_code i== 200);
+      expect(res->body >== "http://httpbin.org/put");
+      expect(res->body >== "\"put put put\"");
     }
   }
 
@@ -339,12 +292,12 @@ describe "bocla"
   {
     it "puts"
     {
-      res = fcla_put_f("http://127.0.0.1:4567/mirror", NULL, __FILE__);
+      res = fcla_put_f(
+        "http://httpbin.org/put?show_env=1", NULL, "../Makefile");
 
       //printf("\n>>>\n%s\n<<<\n", res->body);
-
-      ensure(res->status_code == 200);
-      ensure(strstr(res->body, "spec/bocla_spec.c") != NULL);
+      expect(res->status_code i== 100);
+      expect(res->body >== "NAME=bocla");
     }
   }
 }

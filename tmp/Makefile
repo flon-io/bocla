@@ -1,8 +1,9 @@
 
 CFLAGS=-I../src -g -Wall
 #CFLAGS=-I../src -g -Wall -O3
+LDFLAGS=-lcurl
 LDLIBS=
-CC=c99 -lcurl
+CC=c99
 VPATH=../src
 
 RODZO=$(shell which rodzo)
@@ -17,10 +18,9 @@ NAMES=$(patsubst $(VPATH)/%.c, ./%.o, $(wildcard $(VPATH)/*.c))
 s.c: ../spec/*_spec.c
 	$(RODZO) ../spec -o s.c
 
-s: $(NAMES) ../spec/server/servman.o
+s: $(NAMES)
 
 spec: s
-	$(MAKE) -C ../spec/server clean build
 	time ./s
 
 vspec: s
@@ -39,5 +39,5 @@ clean:
 	rm -f *.c
 	rm -f s
 
-.PHONY: spec vspec tspec dspec clean
+.PHONY: clean
 

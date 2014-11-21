@@ -11,9 +11,6 @@ default: $(NAME).o
 upgrade:
 	cp -v ../flutil/src/flutil.[ch] src/
 
-supgrade:
-	$(MAKE) -C spec/server/ upgrade
-
 cs: clean spec
 
 .PHONY: spec clean upgrade cs
