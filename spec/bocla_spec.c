@@ -146,6 +146,38 @@ describe "bocla"
     }
   }
 
+  describe "fcla_get_hf()"
+  {
+    before each
+    {
+      flu_unlink("_downloaded.json");
+    }
+
+    it "gets and writes to a file"
+    {
+      flu_list *hs = flu_d("user-agent", "fcla_get_hf()", NULL);
+      //
+      res = fcla_get_hf(
+        "http://httpbin.org/get%s", "?show_env=1",
+        hs,
+        "_downloaded.%s", "json");
+
+      expect(res != NULL);
+      expect(res->status_code i== 200);
+      expect(res->body == NULL);
+
+      expect(flu_fstat("_downloaded.json") c== 'f');
+
+      char *s = flu_readall("_downloaded.json");
+      expect(s >==f "\"url\": \"http://httpbin.org/get?show_env=1\"");
+
+      flu_list_free(hs);
+        // the values are not on the heap, no need to use _and_items_free()
+    }
+
+    it "doesn't create the target file in case of error"
+  }
+
   describe "fcla_head()"
   {
     it "heads 200"

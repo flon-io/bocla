@@ -240,7 +240,7 @@ static fcla_response *request(
   //
   //printf("uri: >%s<\n", uri);
 
-  fcla_response *res = fcla_do_request(meth, uri, headers, NULL, NULL);
+  fcla_response *res = fcla_do_request(meth, uri, headers, NULL, NULL, NULL);
 
   free(uri);
   flu_list_free_all(headers);

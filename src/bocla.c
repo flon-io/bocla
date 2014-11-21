@@ -95,6 +95,7 @@ fcla_response *fcla_do_request(
   char meth,
   char *uri,
   flu_list *headers,
+  char *dpath,
   char *sbody,
   FILE *fbody)
 {
@@ -104,6 +105,7 @@ fcla_response *fcla_do_request(
   char *buffer = NULL;
   flu_sbuffer *bhead = NULL;
   flu_sbuffer *bbody = NULL;
+  FILE *dfile = NULL;
 
   CURL *curl;
   struct curl_slist *cheaders = NULL;
@@ -128,10 +130,18 @@ fcla_response *fcla_do_request(
   curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
 
   bhead = flu_sbuffer_malloc();
-  bbody = flu_sbuffer_malloc();
-  //
   curl_easy_setopt(curl, CURLOPT_HEADERDATA, bhead->stream);
-  curl_easy_setopt(curl, CURLOPT_WRITEDATA, bbody->stream);
+
+  if (dpath)
+  {
+    dfile = fopen(dpath, "w");
+    if (dfile == NULL) { res->body = "fail to open target file"; goto _done; }
+  }
+  else
+  {
+    bbody = flu_sbuffer_malloc();
+  }
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, dfile ? dfile : bbody->stream);
 
   if (meth == 'p' || meth == 'u')
   {
@@ -199,7 +209,8 @@ fcla_response *fcla_do_request(
 
   free(shead);
 
-  res->body = flu_sbuffer_to_string(bbody); bbody = NULL;
+  if (bbody) res->body = flu_sbuffer_to_string(bbody);
+  bbody = NULL;
 
 _done:
 
@@ -208,6 +219,7 @@ _done:
   if (bhead) flu_sbuffer_free(bhead);
   if (bbody) flu_sbuffer_free(bbody);
   if (cheaders) curl_slist_free_all(cheaders);
+  if (dfile) fclose(dfile);
 
   return res;
 }
@@ -224,10 +236,33 @@ fcla_response *fcla_ghd(char meth, char hstyle, char *uri, ...)
 
   va_end(ap);
 
-  fcla_response *r = fcla_do_request(meth, u, h, NULL, NULL);
+  fcla_response *r = fcla_do_request(meth, u, h, NULL, NULL, NULL);
 
   free(u);
   if (hstyle == 'd') flu_list_free_all(h);
+
+  return r;
+}
+
+// fcla_get_hf(uri, ..., flu_ldict *headers, path, ...);
+//
+fcla_response *fcla_get_hf(char *uri, ...)
+{
+  va_list ap; va_start(ap, uri);
+
+  char *u = flu_svprintf(uri, ap);
+
+  flu_dict *h = va_arg(ap, flu_dict *);
+
+  char *path = va_arg(ap, char *);
+  char *p = flu_svprintf(path, ap);
+
+  va_end(ap);
+
+  fcla_response *r = fcla_do_request('g', u, h, p, NULL, NULL);
+
+  free(u);
+  free(p);
 
   return r;
 }
@@ -260,7 +295,7 @@ fcla_response *fcla_popu(char meth, char hstyle, char bstyle, char *uri, ...)
     // TODO: error handling
   }
 
-  fcla_response *r = fcla_do_request(meth, u, h, f ? NULL : s, f);
+  fcla_response *r = fcla_do_request(meth, u, h, NULL, f ? NULL : s, f);
 
   free(u);
   free(s);

@@ -68,6 +68,13 @@ fcla_response *fcla_ghd(char meth, char hstyle, char *uri, ...);
 #define fcla_head_d(...) fcla_ghd('h', 'd', __VA_ARGS__)
 #define fcla_delete_d(...) fcla_ghd('d', 'd', __VA_ARGS__)
 
+//
+// fcla_get_hf(uri, ..., flu_ldict *headers, path, ...);
+
+// get and write into a file
+//
+fcla_response *fcla_get_hf(char *uri, ...);
+
 /* Like fcla_ghd() but for post and put.
  */
 fcla_response *fcla_popu(char meth, char hstyle, char bstyle, char *uri, ...);
@@ -103,7 +110,10 @@ fcla_response *fcla_popu(char meth, char hstyle, char bstyle, char *uri, ...);
  * Exposed here since it's used by bocla3.
  */
 fcla_response *fcla_do_request(
-  char meth, char *uri, flu_list *headers, char *sbody, FILE *fbody);
+  char meth, char *uri,
+  flu_list *headers,
+  char *dpath,
+  char *sbody, FILE *fbody);
 
 
 //
