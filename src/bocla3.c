@@ -40,10 +40,12 @@
 
 void fcla3_context_free(fcla3_context *c)
 {
+  if (c == NULL) return; // behave like free() itself
   free(c->endpoint);
   free(c->aki);
   free(c->sak);
   free(c->bucket);
+  free(c);
 }
 
 static int _strcmp(const void *a, const void *b)
@@ -159,8 +161,11 @@ static void sign(
       c->sak, strlen(c->sak),
       (unsigned char *)string, strlen(string),
       NULL, NULL);
+  free(string);
 
-  char *auth = flu_sprintf("AWS %s:%s", c->aki, flu64_encode((char *)d, 20));
+  char *sig = flu64_encode((char *)d, 20);
+  char *auth = flu_sprintf("AWS %s:%s", c->aki, sig);
+  free(sig);
 
   flu_list_set(headers, "authorization", auth);
 
@@ -211,8 +216,13 @@ flu_list *fcla3_list_buckets(fcla3_context *c)
 
   //flu_putf(fcla_response_to_s(res));
 
-  flu_list_free(headers);
+  free(host);
+  flu_list_free_all(headers);
 
-  return extract(res->body, "Name");
+  flu_list *r = extract(res->body, "Name");
+
+  fcla_response_free(res);
+
+  return r;
 }
 

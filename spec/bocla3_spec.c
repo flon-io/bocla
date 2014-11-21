@@ -27,6 +27,8 @@ describe "bocla3"
     a = strstr(b, ":") + 1; if (*a == ' ') ++a;
     b = strchr(a, '\n');
     c->sak = rdz_strndup(a, b - a - 1);
+
+    free(s); s = NULL;
   }
   after each
   {
@@ -46,6 +48,8 @@ describe "bocla3"
     }
 
     expect(success i== 1);
+
+    flu_list_free_all(l);
   }
 }
 
