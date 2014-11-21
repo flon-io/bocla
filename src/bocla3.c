@@ -49,13 +49,6 @@ void fcla3_context_free(fcla3_context *c)
   free(c);
 }
 
-  // TODO: make that flu_strcmp() maybe...
-  //
-static int _strcmp(const void *a, const void *b)
-{
-  return strcmp((char *)a, (char *)b);
-}
-
 static char *canonicalize_headers(flu_dict *headers)
 {
   flu_list *l = flu_list_malloc();
@@ -67,7 +60,7 @@ static char *canonicalize_headers(flu_dict *headers)
 
   if (l->size < 1) { flu_list_free(l); return NULL; }
 
-  flu_list_isort(l, _strcmp);
+  flu_list_isort(l, (int (*)(const void *, const void *))strcmp);
 
   flu_sbuffer *b = flu_sbuffer_malloc();
 
