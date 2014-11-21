@@ -171,6 +171,29 @@ static void sign(
   //}
 }
 
+static flu_list *extract(char *body, char *key)
+{
+  flu_list *r = flu_list_malloc();
+
+  char *a = NULL;
+  char *b = body;
+  char *skey = flu_sprintf("<%s>", key); size_t skl = strlen(skey);
+  char *ekey = flu_sprintf("</%s>", key);
+
+  while (1)
+  {
+    a = strstr(b, skey); if (a == NULL) break;
+    b = strstr(b + 1, ekey);
+
+    flu_list_add(r, strndup(a + skl, b - a - skl));
+  }
+
+  free(skey);
+  free(ekey);
+
+  return r;
+}
+
 flu_list *fcla3_list_buckets(fcla3_context *c)
 {
   flu_list *headers = flu_list_malloc();
@@ -184,10 +207,12 @@ flu_list *fcla3_list_buckets(fcla3_context *c)
   fcla_response *res =
     fcla_get_h("https://%s%s%s", host, path, query, headers);
 
-  flu_putf(fcla_response_to_s(res));
+  // TODO: keep last response in context...
+
+  //flu_putf(fcla_response_to_s(res));
 
   flu_list_free(headers);
 
-  return flu_list_malloc();
+  return extract(res->body, "Name");
 }
 

@@ -37,10 +37,15 @@ describe "bocla3"
   {
     flu_list *l = fcla3_list_buckets(c);
 
+    int success = 0;
+
     for (flu_node *n = l->first; n; n = n->next)
     {
-      printf("* %s\n", (char *)n->item);
+      //printf("* >%s<\n", (char *)n->item);
+      if (strcmp((char *)n->item, "operati.ca") == 0) success = 1;
     }
+
+    expect(success i== 1);
   }
 }
 
