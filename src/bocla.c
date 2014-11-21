@@ -60,11 +60,6 @@ void fcla_response_free(fcla_response *r)
   free(r);
 }
 
-static size_t fcla_w(void *v, size_t s, size_t n, void *b)
-{
-  return flu_sbfwrite(b, v, s, n);
-}
-
 static short fcla_extract_status(char *head)
 {
   return strtol(strchr(head, ' '), NULL, 10);
@@ -131,13 +126,12 @@ fcla_response *fcla_do_request(
   curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, buffer);
   curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5);
   curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
-  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fcla_w);
 
   bhead = flu_sbuffer_malloc();
   bbody = flu_sbuffer_malloc();
   //
-  curl_easy_setopt(curl, CURLOPT_HEADERDATA, bhead);
-  curl_easy_setopt(curl, CURLOPT_WRITEDATA, bbody);
+  curl_easy_setopt(curl, CURLOPT_HEADERDATA, bhead->stream);
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, bbody->stream);
 
   if (meth == 'p' || meth == 'u')
   {
