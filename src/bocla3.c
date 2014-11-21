@@ -46,22 +46,40 @@ void fcla3_context_free(fcla3_context *c)
   free(c->bucket);
 }
 
+static int _strcmp(const void *a, const void *b)
+{
+  return strcmp((char *)a, (char *)b);
+}
+
+static char *canonicalize_headers(flu_dict *headers)
+{
+  flu_list *l = flu_list_malloc();
+
+  for (flu_node *n = headers->first; n; n = n->next)
+  {
+    if (strncmp(n->key, "x-amz-", 6) == 0) flu_list_add(l, n->key);
+  }
+
+  if (l->size < 1) { flu_list_free(l); return NULL; }
+
+  flu_list_isort(l, _strcmp);
+
+  flu_sbuffer *b = flu_sbuffer_malloc();
+
+  for (flu_node *n = l->first; n; n = n->next)
+  {
+    char *k = n->item;
+    flu_sbprintf(b, "%s:%s\n", k, (char *)flu_list_get(headers, k));
+      // the k, when printed, should be lowercase
+  }
+
+  char *r = flu_sbuffer_to_string(b);
+  r[strlen(r) - 1] = 0;
+
+  return r;
+}
+
 /*
-def canonicalized_amz_headers(headers)
-
-  s = headers.select { |k, v|
-    k.match(/^x-amz-/i)
-  }.collect { |k, v|
-    [ k.downcase, v ]
-  }.sort_by { |k, v|
-    k
-  }.collect { |k, v|
-    "#{k}:#{v}"
-  }.join("\n")
-
-  s == '' ? nil : s
-end
-
 #S3_PARAMS =
 #  %w[
 #    acl location logging notification partNumber policy
@@ -73,22 +91,8 @@ end
 #    response-expires response-cache-control
 #    response-content-disposition response-content-encoding
 #  ]
-
-def string_to_sign(meth, uri, headers)
-
-  hs = canonicalized_amz_headers(headers)
-
-  a = []
-  a << meth.to_s.upcase
-  a << headers['content-md5']
-  a << headers['content-type']
-  a << headers['date']
-  a << hs if hs
-  a << canonicalized_resource(uri)
-
-  a.join("\n")
-end
 */
+
 static char *canonicalize_resource(
   fcla3_context *c, char *host, char *path, char *query)
 {
@@ -110,12 +114,16 @@ static char *string_to_sign(
   flu_sbuffer *b = flu_sbuffer_malloc();
 
   flu_sbprintf(b, "%s\n", meth);
+
   flu_sbprintf(b, "%s\n", flu_list_getd(headers, "content-md5", ""));
   flu_sbprintf(b, "%s\n", flu_list_getd(headers, "content-type", ""));
   flu_sbprintf(b, "%s\n", flu_list_get(headers, "date"));
-  // hs
+
+  char *hs = canonicalize_headers(headers);
+  if (hs) { flu_sbputs(b, hs); free(hs); }
+
   char *pa = canonicalize_resource(c, host, path, query);
-  flu_sbputs(b, pa);
+  flu_sbputs(b, pa); free(pa);
 
   return flu_sbuffer_to_string(b);
 }
@@ -143,7 +151,7 @@ static void sign(
 
   char *string = string_to_sign(c, meth, host, path, query, headers);
 
-  printf("string to sign: >%s<\n", string);
+  //printf("string to sign: >%s<\n", string);
 
   unsigned char *d =
     HMAC(
@@ -156,11 +164,11 @@ static void sign(
 
   flu_list_set(headers, "authorization", auth);
 
-  printf("https://%s%s%s // req headers:\n", host, path, query);
-  for (flu_node *n = headers->first; n; n = n->next)
-  {
-    printf("  * \"%s\": \"%s\"\n", n->key, (char *)n->item);
-  }
+  //printf("https://%s%s%s // req headers:\n", host, path, query);
+  //for (flu_node *n = headers->first; n; n = n->next)
+  //{
+  //  printf("  * \"%s\": \"%s\"\n", n->key, (char *)n->item);
+  //}
 }
 
 flu_list *fcla3_list_buckets(fcla3_context *c)
