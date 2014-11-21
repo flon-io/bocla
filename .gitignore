@@ -5,4 +5,5 @@ tmp/s.c
 spec/server/*.o
 spec/server/tmp/server
 spec/server/tmp/*.o
+.aws
 

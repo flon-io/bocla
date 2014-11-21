@@ -39,6 +39,8 @@ typedef struct fcla_response {
   char *body;
 } fcla_response;
 
+char *fcla_response_to_s(fcla_response *r);
+
 void fcla_response_free(fcla_response *r);
 
 /* Used behind the scenes by the _get/_head/_delete[_x|_d] methods (macros).

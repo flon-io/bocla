@@ -1,5 +1,6 @@
 
 CFLAGS=-I../src -g -Wall
+#CFLAGS=-I../src -g -Wall -D_POSIX_C_SOURCE=200809L
 #CFLAGS=-I../src -g -Wall -O3
 LDFLAGS=-lcurl
 LDLIBS=

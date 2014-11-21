@@ -140,6 +140,14 @@ int flu_writeall(const char *path, ...);
  */
 int flu_unlink(const char *path, ...);
 
+/* Composes a path
+ */
+char *flu_vpath(const char *path, va_list ap);
+
+/* Composes a path.
+ */
+char *flu_path(const char *path, ...);
+
 /* It canonicalizes a path, like realpath().
  * Unlike realpath(), it doesn't care if the path points to nowhere.
  */
@@ -284,10 +292,14 @@ void flu_list_set(flu_list *l, const char *key, void *item);
  */
 void flu_list_set_last(flu_list *l, const char *key, void *item);
 
+/* Like flu_list_get() but a default is specified.
+ */
+void *flu_list_getd(flu_list *l, const char *key, void *def);
+
 /* Given a key, returns the item bound for it, NULL instead.
  * (O(n)).
  */
-void *flu_list_get(flu_list *l, const char *key);
+#define flu_list_get(l, key) flu_list_getd(l, key, NULL)
 
 /* Returns a trimmed (a unique value per key) version of the given flu_list
  * dictionary. Meant for iterating over key/values.
@@ -384,10 +396,22 @@ char *flu_strdup(char *s);
  */
 int flu_system(const char *format, ...);
 
+/* Popens a cmd and returns the result as a string.
+ */
+char *flu_plines(const char *cmd, ...);
+
+/* Popens a cmd and returns the result's first line as a string.
+ */
+char *flu_pline(const char *cmd, ...);
+
 /* Like strtoll(3), but accepts a length.
  * Returns 0 when in doubt.
  */
 long long flu_stoll(char *s, size_t l, int base);
+
+/* Calls puts() with its argument, then frees it. Returns puts() result.
+ */
+int flu_putf(char *s);
 
 #endif // FLON_FLUTIL_H
 

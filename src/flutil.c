@@ -323,27 +323,15 @@ int flu_unlink(const char *path, ...)
   return r;
 }
 
-char *flu_canopath(const char *path, ...)
+static char *flu_simplify_path(const char *s)
 {
-  va_list ap; va_start(ap, path);
-  char *s = flu_svprintf(path, ap);
-  va_end(ap);
-
-  if (s[0] != '/')
-  {
-    char *cwd = getcwd(NULL, 0);
-    char *ss = flu_sprintf("%s/%s", cwd, s);
-    free(cwd);
-    free(s);
-    s = ss;
-  }
-
   char *r = calloc(strlen(s) + 1, sizeof(char));
-  *r = '/';
-  char *rr = r + 1;
+  char *rr = r;
 
-  char *a = s + 1;
+  char *a = (char *)s;
   char *b = NULL;
+
+  if (*s == '/') { *r = '/'; rr = r + 1; a = (char *)s + 1; }
 
   while (1)
   {
@@ -355,7 +343,7 @@ char *flu_canopath(const char *path, ...)
     if (l == 2 && strncmp(a, "./", 2) == 0) dots = 1;
     else if (l == 1 && strncmp(a, "/", 1) == 0) dots = 1;
     else if (l == 1 && strncmp(a, ".\0", 2) == 0) dots = 1;
-    else if (l >= 2 && strncmp(a, "..", 2) == 0) dots = 2;
+    else if (l >= 2 && a > s && strncmp(a, "..", 2) == 0) dots = 2;
 
     if (dots == 2 && rr > r + 1)
     {
@@ -375,6 +363,43 @@ char *flu_canopath(const char *path, ...)
     a = b + 1;
   }
 
+  return r;
+}
+
+char *flu_vpath(const char *path, va_list ap)
+{
+  char *s = flu_svprintf(path, ap);
+  char *r = flu_simplify_path(s);
+  free(s);
+
+  return r;
+}
+
+char *flu_path(const char *path, ...)
+{
+  va_list ap; va_start(ap, path);
+  char *r = flu_vpath(path, ap);
+  va_end(ap);
+
+  return r;
+}
+
+char *flu_canopath(const char *path, ...)
+{
+  va_list ap; va_start(ap, path);
+  char *s = flu_svprintf(path, ap);
+  va_end(ap);
+
+  if (s[0] != '/')
+  {
+    char *cwd = getcwd(NULL, 0);
+    char *ss = flu_sprintf("%s/%s", cwd, s);
+    free(cwd);
+    free(s);
+    s = ss;
+  }
+
+  char *r = flu_simplify_path(s);
   free(s);
 
   return r;
@@ -650,11 +675,11 @@ static flu_node *flu_list_getn(flu_list *l, const char *key)
   return NULL;
 }
 
-void *flu_list_get(flu_list *l, const char *key)
+void *flu_list_getd(flu_list *l, const char *key, void *def)
 {
   flu_node *n = flu_list_getn(l, key);
 
-  return n == NULL ? NULL : n->item;
+  return n ? n->item : def;
 }
 
 flu_list *flu_list_dtrim(flu_list *l)
@@ -897,6 +922,24 @@ char *flu_strdup(char *s)
   return r;
 }
 
+long long flu_stoll(char *s, size_t l, int base)
+{
+  char *ss = strndup(s, l);
+  long long r = strtoll(ss, NULL, base);
+  free(ss);
+  //printf("flu_stoll() >%s< in >%s< --> %li\n", s, strndup(s, l), r);
+
+  return r;
+}
+
+int flu_putf(char *s)
+{
+  int r = puts(s);
+  free(s);
+
+  return r;
+}
+
 int flu_system(const char *cmd, ...)
 {
   va_list ap; va_start(ap, cmd); char *c = flu_svprintf(cmd, ap); va_end(ap);
@@ -908,13 +951,33 @@ int flu_system(const char *cmd, ...)
   return r;
 }
 
-long long flu_stoll(char *s, size_t l, int base)
+char *flu_plines(const char *cmd, ...)
 {
-  char *ss = strndup(s, l);
-  long long r = strtoll(ss, NULL, base);
-  free(ss);
-  //printf("flu_stoll() >%s< in >%s< --> %li\n", s, strndup(s, l), r);
+  va_list ap; va_start(ap, cmd); char *c = flu_svprintf(cmd, ap); va_end(ap);
 
-  return r;
+  FILE *f = popen(c, "r"); if (f == NULL) { free(c); return NULL; }
+
+  char *s = flu_freadall(f);
+  fclose(f);
+  free(c);
+
+  return s;
+}
+
+char *flu_pline(const char *cmd, ...)
+{
+  va_list ap; va_start(ap, cmd); char *c = flu_svprintf(cmd, ap); va_end(ap);
+
+  char *s = NULL; size_t l = 0;
+
+  FILE *f = popen(c, "r"); if (f == NULL) { free(c); return NULL; }
+
+  getline(&s, &l, f);
+
+  fclose(f);
+  free(c);
+  if (s) s[strlen(s) - 1] = 0;
+
+  return s;
 }
 

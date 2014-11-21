@@ -9,8 +9,7 @@ default: $(NAME).o
 # copy updated version of dep libs into src/
 #
 upgrade:
-	cp -v ../flutil/src/flutil.[ch] src/
-	cp -v ../flutil/src/flu64.[ch] src/
+	cp -v ../flutil/src/*.[ch] src/
 
 .PHONY: spec clean upgrade
 
