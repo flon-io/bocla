@@ -67,7 +67,7 @@ describe "bocla3"
 
       expect(c->last_response != NULL);
       expect(c->last_response->status_code i== 200);
-      expect(s === "flon is a kind of interpreter");
+      expect(s ===f "flon is a kind of interpreter");
     }
 
     it "accepts a bucket name as prefix>"
@@ -78,7 +78,7 @@ describe "bocla3"
 
       expect(c->last_response != NULL);
       expect(c->last_response->status_code i== 200);
-      expect(s === "flon is a kind of interpreter");
+      expect(s ===f "flon is a kind of interpreter");
     }
   }
 

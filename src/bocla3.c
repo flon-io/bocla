@@ -247,6 +247,7 @@ static fcla_response *request(
 
   fcla_response *res = fcla_do_request(meth, uri, headers, NULL, NULL);
 
+  free(uri);
   flu_list_free_all(headers);
 
   fcla_response_free(c->last_response);
