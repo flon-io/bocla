@@ -10,8 +10,7 @@ default: $(NAME).o
 #
 upgrade:
 	cp -v ../flutil/src/flutil.[ch] src/
+	cp -v ../flutil/src/flu64.[ch] src/
 
-cs: clean spec
-
-.PHONY: spec clean upgrade cs
+.PHONY: spec clean upgrade
 
