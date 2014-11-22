@@ -112,7 +112,10 @@ fcla_response *fcla_do_request(
 
   curl = curl_easy_init();
 
-  if (curl == NULL) { res->body = "curl initialization failed"; goto _done; }
+  if (curl == NULL) {
+    res->body = strdup("curl initialization failed");
+    goto _done;
+  }
 
   buffer = calloc(512, sizeof(char));
 
@@ -135,7 +138,11 @@ fcla_response *fcla_do_request(
   if (dpath)
   {
     dfile = fopen(dpath, "w");
-    if (dfile == NULL) { res->body = "failed to open target file"; goto _done; }
+
+    if (dfile == NULL) {
+      res->body = flu_sprintf("failed to open target file %s", dpath);
+      goto _done;
+    }
   }
   else
   {
@@ -215,7 +222,7 @@ fcla_response *fcla_do_request(
 _done:
 
   if (curl) curl_easy_cleanup(curl);
-  if (res->status_code > -1 && buffer != NULL) free(buffer);
+  if (buffer != res->body) free(buffer);
   if (bhead) flu_sbuffer_free(bhead);
   if (bbody) flu_sbuffer_free(bbody);
   if (cheaders) curl_slist_free_all(cheaders);

@@ -155,11 +155,9 @@ describe "bocla"
 
     it "gets and writes to a file"
     {
-      flu_list *hs = flu_d("user-agent", "fcla_get_hf()", NULL);
-      //
       res = fcla_get_hf(
         "http://httpbin.org/get%s", "?show_env=1",
-        hs,
+        NULL, // no specific headers
         "_downloaded.%s", "json");
 
       expect(res != NULL);
@@ -170,13 +168,19 @@ describe "bocla"
 
       char *s = flu_readall("_downloaded.json");
       expect(s >==f "\"url\": \"http://httpbin.org/get?show_env=1\"");
-
-      flu_list_free(hs);
-        // the values are not on the heap, no need to use _and_items_free()
     }
 
     it "doesn't create the target file in case of error"
+
     it "returns an error message if it cannot open the file (for writing)"
+    {
+      res = fcla_get_hf(
+        "http://httpbin.org/get?show_env=1", NULL, "/_downloaded.json");
+
+      expect(res != NULL);
+      expect(res->status_code i== -1);
+      expect(res->body === "failed to open target file /_downloaded.json");
+    }
   }
 
   describe "fcla_head()"
