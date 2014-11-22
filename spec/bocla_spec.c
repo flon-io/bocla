@@ -170,8 +170,6 @@ describe "bocla"
       expect(s >==f "\"url\": \"http://httpbin.org/get?show_env=1\"");
     }
 
-    it "doesn't create the target file in case of error"
-
     it "returns an error message if it cannot open the file (for writing)"
     {
       res = fcla_get_hf(
@@ -180,6 +178,18 @@ describe "bocla"
       expect(res != NULL);
       expect(res->status_code i== -1);
       expect(res->body === "failed to open target file /_downloaded.json");
+    }
+
+    it "downloads anyway"
+    {
+      res = fcla_get_hf(
+        "http://httpbin.org/status/404?show_env=1", NULL, "_downloaded.json");
+      expect(res != NULL);
+      expect(res->status_code i== 404);
+      expect(res->body == NULL);
+
+      char *s = flu_readall("_downloaded.json");
+      expect(s ===f "");
     }
   }
 
