@@ -58,7 +58,7 @@ describe "bocla"
       expect(res->status_code == 200);
       //puts(res->body);
       expect(res->body >=== "Testing an HTTP Library can become difficult");
-      expect(flu_list_get(res->headers, "Content-Length") === "10806");
+      //expect(flu_list_get(res->headers, "Content-Length") === "10806");
     }
 
     it "gets 404"
@@ -202,7 +202,7 @@ describe "bocla"
       //printf("\n>>>\n%s\n<<<\n", res->body);
       expect(res->status_code i== 200);
       expect(res->body === "");
-      expect(flu_list_get(res->headers, "Content-Length") === "10806");
+      //expect(flu_list_get(res->headers, "Content-Length") === "10806");
     }
   }
 
