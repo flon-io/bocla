@@ -42,7 +42,7 @@ char *fcla_response_to_s(fcla_response *r)
 {
   flu_sbuffer *sb = flu_sbuffer_malloc();
 
-  flu_sbprintf(sb, "< --res-->\n");
+  flu_sbprintf(sb, "<--res-->\n");
   flu_sbprintf(sb, "  status_code: %i\n", r->status_code);
   for (flu_node *n = r->headers->first; n; n = n->next)
     flu_sbprintf(sb, "  * \"%s\": \"%s\"\n", n->key, (char *)n->item);
