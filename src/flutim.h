@@ -51,7 +51,7 @@ long long flu_msleep(long long milliseconds);
 
 /* Sleeps for a given amount of milliseconds.
  * If interrupted, sleeps again until the required milliseconds have all been
- * slept through. Returns the how many milliseconds it actually slept.
+ * slept through. Returns the the count of milliseconds it actually slept.
  */
 long long flu_do_msleep(long long milliseconds);
 
@@ -69,6 +69,8 @@ long long flu_do_msleep(long long milliseconds);
  *
  * '2' --> "Fri, 30 Oct 2014 16:34:01 +0000" // rfc-822
  *
+ * 'T' --> "20141101T163401Z" // ISO8601
+ *
  * If the tm arg is NULL, the function will grab the time thanks to
  * clock_gettime(CLOCK_REALTIME, &ts).
  *
@@ -76,6 +78,11 @@ long long flu_do_msleep(long long milliseconds);
  * Not thread-safe.
  */
 char *flu_tstamp(struct timespec *ts, int utc, char format);
+
+/* Like flu_tstamp() but expect a count of seconds, not a struct timespec.
+ * So, no nanoseconds involved.
+ */
+char *flu_sstamp(long long s, int utc, char format);
 
 /* Parses a timestamp, takes a utc hint.
  *
@@ -101,6 +108,11 @@ struct timespec *flu_parse_ts(const char *s);
  * When it cannot parse, it sets errno to EINVAL and returns 0.
  */
 long long flu_parse_t(const char *s);
+
+/* Like flu_parse_ts() but returns a double (where 1.0 means 1s).
+ * When it cannot parse, it sets errno to EINVAL and returns 0.0.
+ */
+double flu_parse_d(const char *s);
 
 #endif // FLON_FLUTIM_H
 

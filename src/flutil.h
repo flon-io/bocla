@@ -186,6 +186,24 @@ int flu_move(const char *path, ...);
  */
 int flu_mkdir_p(const char *path, ...);
 
+/* Given a wordexp path, unlinks the matching files.
+ *
+ * Returns the count of unlinked files in case of success.
+ *
+ * In case of error, it returns -1, immediately after the error. Files
+ * seen up to the error are unlinked. Files after the error are not unlinked.
+ */
+ssize_t flu_rm_files(const char *path, ...);
+
+/* Empties a dir recursively.
+ * Doesn't remove files prefixed with a dot.
+ *
+ * Returns 0 in case of success.
+ */
+int flu_empty_dir(const char *path, ...);
+
+int flu_prune_empty_dirs(const char *path, ...);
+
 
 //
 // flu_list
@@ -210,10 +228,20 @@ typedef struct flu_list {
  */
 flu_list *flu_list_malloc();
 
+/* Creates a new list, with all the given elements.
+ * Expects a NULL to stop the list of elements. Yes, no NULL elements when
+ * weaving a list from this method.
+ */
+flu_list *flu_l(void *elt0, ...);
+
 /* Frees a flu_list and all its nodes. But doesn't attempt freeing the
  * items in the nodes.
  */
 void flu_list_free(flu_list *l);
+
+/* Used by functions that remove items from flu_list instances.
+ */
+void flu_node_free(flu_node *n);
 
 /* Frees a flu_list and all its nodes. Calls the given free_item function
  * on each of the items within the nodes.
@@ -272,9 +300,33 @@ void *flu_list_shift(flu_list *l);
 //void *flu_list_pop(flu_list *l);
 //void flu_list_insert(flu_list *l, size_t index, const void *item);
 
+/* Inserts an item at the right position...
+ */
+void flu_list_oinsert(
+  flu_list *l, void *item, int (*cmp)(const void *, const void *));
+
 /* Performs an insertion sort (in place) of the flu_list.
  */
 void flu_list_isort(flu_list *l, int (*cmp)(const void *, const void *));
+
+/* Adds [links to] the elements of from at the end of to.
+ */
+void flu_list_concat(flu_list *to, flu_list *from);
+
+/* Returns a string representation of the given flu_list.
+ * Warning: only works when all the values are strings.
+ */
+char *flu_list_to_s(flu_list *l);
+
+/* Same as flu_list_to_s() but one line per entry.
+ */
+char *flu_list_to_sm(flu_list *l);
+
+/* Returns a string representation of the given flu_list.
+ * Instead of displaying the string values, displays their pointer info,
+ * so it works with any value (well pointers).
+ */
+char *flu_list_to_sp(flu_list *l);
 
 //
 // flu_list dictionary functions
@@ -286,6 +338,10 @@ void flu_list_isort(flu_list *l, int (*cmp)(const void *, const void *));
  * Unshifts the new binding (O(1)).
  */
 void flu_list_set(flu_list *l, const char *key, void *item);
+
+/* Like flu_list_set() but doesn't duplicate the string key, uses it as is.
+ */
+void flu_list_setk(flu_list *l, char *key, void *item, int set_as_last);
 
 /* Sets an item under a given key, but at then end of the list.
  * Useful for "defaults".
