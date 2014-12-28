@@ -2,6 +2,7 @@
 tmp/*.o
 tmp/s
 tmp/s.c
+tmp/_downloaded.json
 spec/server/*.o
 spec/server/tmp/server
 spec/server/tmp/*.o
