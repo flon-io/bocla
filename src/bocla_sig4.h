@@ -31,20 +31,18 @@
 #define FLON_BOCLA_SIG4_H
 
 typedef struct {
+  char *provider; // usually "aws"
   char *aki;
   char *sak;
-  char *service;
-  char *region;
 } fcla_sig4_context;
 
 fcla_sig4_context *fcla_sig4_context_init(const char *path);
 void fcla_sig4_context_free(fcla_sig4_context *c);
 
 void fcla_sig4_sign(
-  fcla_sig4_context *c,
-  char meth, char *host, char *path, char *query,
-  flu_dict *headers,
-  char *body, ssize_t bodyl);
+  fcla_sig4_context *c, char *service, char *region,
+  char meth, char *host, char *path, char *query, flu_dict *headers,
+  char *body, size_t bodyl);
 
 #endif // FLON_BOCLA_SIG4_H
 

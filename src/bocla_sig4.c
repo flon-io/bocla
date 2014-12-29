@@ -29,8 +29,8 @@
 
 #include <stdlib.h>
 #include <string.h>
-//#include <openssl/md5.h>
-//#include <openssl/hmac.h>
+#include <openssl/sha.h>
+#include <openssl/hmac.h>
 
 #include "flutim.h"
 #include "bocla.h"
@@ -44,8 +44,11 @@ fcla_sig4_context *fcla_sig4_context_init(const char *path)
 
   fcla_sig4_context *c = calloc(1, sizeof(fcla_sig4_context));
 
+  c->provider = flu_list_get(d, "provider");
   c->aki = flu_list_get(d, "aki");
   c->sak = flu_list_get(d, "sak");
+
+  if (c->provider == NULL) c->provider = strdup("aws");
 
   flu_list_free(d);
 
@@ -56,18 +59,46 @@ void fcla_sig4_context_free(fcla_sig4_context *c)
 {
   if (c == NULL) return;
 
+  free(c->provider);
   free(c->aki);
   free(c->sak);
-  free(c->service);
-  free(c->region);
   free(c);
 }
 
-void fcla_sig4_sign(
-  fcla_sig4_context *c,
-  char meth, char *host, char *path, char *query,
-  flu_dict *headers,
-  char *body, ssize_t bodyl)
+static char *to_hex_string(unsigned char *data)
 {
+  char *r = calloc(65, sizeof(char));
+
+  for (size_t i = 0; i < SHA256_DIGEST_LENGTH; ++i)
+    sprintf(r + 2 * i, "%02x", data[i]);
+
+  return r;
+}
+
+void fcla_sig4_sign(
+  fcla_sig4_context *c, char *service, char *region,
+  char meth, char *host, char *path, char *query, flu_dict *headers,
+  char *body, size_t bodyl)
+{
+  struct timespec *now = flu_now();
+  char *gmt_date = flu_tstamp(now, 1, 'g');
+  char *bigt_date = flu_tstamp(now, 1, 'T');
+  free(now);
+
+  flu_list_set(headers, "date", gmt_date);
+  flu_list_set(headers, "x-%s-date", c->provider, bigt_date);
+
+  unsigned char h[SHA256_DIGEST_LENGTH];
+  SHA256((unsigned char *)body, bodyl, h);
+
+  flu_list_set(headers, "x-%s-content-sha256", c->provider, to_hex_string(h));
+
+flu_putf(flu_list_to_s(headers));
+
+  //expect(flu_list_get(headers, "Authorization") === ""
+  //  "AWS4-HMAC-SHA256 "
+  //  "Credential=AKIAIOSFODNN7EXAMPLE/20130524/us-east-1/s3/aws4_request,"
+  //  "SignedHeaders=host;range;x-amz-content-sha256;x-amz-date,"
+  //  "Signature=f0e8bdb87c964420e857bd35b5d6ed310bd44f0170aba48dd91039c6036bdb41");
 }
 

@@ -16,8 +16,6 @@ describe "sig4:"
   before each
   {
     fcla_sig4_context *c = fcla_sig4_context_init("../.aws");
-    c->service = rdz_strdup("s3");
-    c->region = rdz_strdup("douchebagistan");
 
     flu_dict *headers = NULL;
   }
@@ -41,9 +39,13 @@ describe "sig4:"
 
       fcla_sig4_sign(
         c,
+        "s3", "us-east-1",
         'g', "examplebucket.s3.amazonaws.com", "/test.txt", "",
         headers,
-        NULL, -1);
+        "", 0); // empty body
+
+      expect(flu_list_get(headers, "x-aws-content-sha256") === ""
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
 
       expect(flu_list_get(headers, "Authorization") === ""
         "AWS4-HMAC-SHA256 "
