@@ -859,6 +859,17 @@ void flu_list_set_last(flu_list *l, const char *key, ...)
   flu_list_add(l, item); l->last->key = k;
 }
 
+void flu_list_sets(flu_list *l, const char *key, ...)
+{
+  va_list ap; va_start(ap, key);
+  char *k = flu_svprintf(key, ap);
+  char *value = va_arg(ap, char *);
+  char *v = flu_svprintf(value, ap);
+  va_end(ap);
+
+  flu_list_setk(l, k, v, 0);
+}
+
 static flu_node *flu_list_getn(flu_list *l, const char *key)
 {
   for (flu_node *n = l->first; n != NULL; n = n->next)

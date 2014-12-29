@@ -354,6 +354,10 @@ void flu_list_setk(flu_list *l, char *key, void *item, int set_as_last);
  */
 void flu_list_set_last(flu_list *l, const char *key, ...);
 
+/* Composes key and *string* value then sets in dictionary.
+ */
+void flu_list_sets(flu_list *l, const char *key, ...);
+
 /* Like flu_list_get() but a default is specified.
  */
 void *flu_list_getd(flu_list *l, const char *key, void *def);
