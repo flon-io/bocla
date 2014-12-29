@@ -43,7 +43,7 @@ describe "sig4:"
         headers,
         "", 0); // empty body
 
-      expect(flu_list_get(headers, "x-aws-content-sha256") === ""
+      expect(flu_list_get(headers, "x-amz-content-sha256") === ""
         "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
 
       expect(flu_list_get(headers, "Authorization") === ""

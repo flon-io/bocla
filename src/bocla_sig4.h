@@ -33,6 +33,7 @@
 typedef struct {
   char *provider; // usually "aws"
   char *provider_u; // uppercase
+  char *header; // "amz" for "x-amz-..."
   char *aki;
   char *sak;
   char *service;

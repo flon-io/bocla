@@ -47,10 +47,19 @@ fcla_sig4_session *fcla_sig4_session_init(
   fcla_sig4_session *s = calloc(1, sizeof(fcla_sig4_session));
 
   s->provider = flu_list_get(d, "provider");
+  s->header = flu_list_get(d, "header");
   s->aki = flu_list_get(d, "aki");
   s->sak = flu_list_get(d, "sak");
 
-  if (s->provider == NULL) s->provider = strdup("aws");
+  if (s->provider == NULL)
+  {
+    s->provider = strdup("aws");
+    s->header = strdup("amz");
+  }
+  if (s->header == NULL)
+  {
+    s->header = strdup(s->provider);
+  }
 
   size_t l = strlen(s->provider);
   s->provider_u = calloc(l + 1, sizeof(char));
@@ -106,9 +115,43 @@ static unsigned char *hmac_sha256(const char *key, const char *data)
     NULL, NULL);
 }
 
+static char *to_low(const char *s)
+{
+  char *r = strdup(s);
+  for (size_t i = 0; ; ++i)
+  {
+    char c = r[i]; if (c == 0) break;
+    r[i] = tolower(c);
+  }
+
+  return r;
+}
+
 static char *signed_headers(flu_dict *headers)
 {
-  return strdup("host;range");
+  flu_list *d = flu_list_dtrim(headers);
+
+  flu_list *l = flu_list_malloc();
+  for (flu_node *fn = headers->first; fn; fn = fn->next)
+  {
+    if (*fn->key == '_') continue;
+    if (strcmp(fn->key, "date") == 0) continue;
+    flu_list_add(l, to_low(fn->key));
+  }
+  flu_list_free(d);
+
+  flu_list_isort(l, strcmp);
+
+  flu_sbuffer *b = flu_sbuffer_malloc();
+
+  for (flu_node *fn = l->first; fn; fn = fn->next)
+  {
+    flu_sbputs(b, fn->item);
+    if (fn != l->last) flu_sbputc(b, ';');
+  }
+  flu_list_free_all(l);
+
+  return flu_sbuffer_to_string(b);
 }
 
 static char *signature(
@@ -137,14 +180,19 @@ void fcla_sig4_sign(
   free(now);
 
   flu_list_set(headers, "date", gmt_date);
-  flu_list_set(headers, "x-%s-date", s->provider, bigt_date);
+  flu_list_set(headers, "x-%s-date", s->header, bigt_date);
+
+  if (flu_list_get(headers, "Host") == NULL)
+  {
+    flu_list_set(headers, "host", strdup(host));
+  }
 
   unsigned char h[SHA256_DIGEST_LENGTH];
   SHA256((unsigned char *)body, bodyl, h);
 
   flu_list_set(
     headers,
-    "x-%s-content-sha256", s->provider,
+    "x-%s-content-sha256", s->header,
     bin_to_hex(h, SHA256_DIGEST_LENGTH));
 
   char *sh = signed_headers(headers);
