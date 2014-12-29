@@ -336,8 +336,11 @@ char *flu_list_to_sp(flu_list *l);
 
 /* Sets an item under a given key.
  * Unshifts the new binding (O(1)).
+ *
+ * Composes the key with the ... and expects the last arguments to be
+ * the item.
  */
-void flu_list_set(flu_list *l, const char *key, void *item);
+void flu_list_set(flu_list *l, const char *key, ...);
 
 /* Like flu_list_set() but doesn't duplicate the string key, uses it as is.
  */
@@ -345,8 +348,11 @@ void flu_list_setk(flu_list *l, char *key, void *item, int set_as_last);
 
 /* Sets an item under a given key, but at then end of the list.
  * Useful for "defaults".
+ *
+ * Composes the key with the ... and expects the last arguments to be
+ * the item.
  */
-void flu_list_set_last(flu_list *l, const char *key, void *item);
+void flu_list_set_last(flu_list *l, const char *key, ...);
 
 /* Like flu_list_get() but a default is specified.
  */

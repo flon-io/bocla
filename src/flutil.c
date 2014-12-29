@@ -827,11 +827,6 @@ char *flu_list_to_s(flu_list *l) { return list_to_s(l, 's'); }
 char *flu_list_to_sm(flu_list *l) { return list_to_s(l, 'S'); }
 char *flu_list_to_sp(flu_list *l) { return list_to_s(l, 'p'); }
 
-void flu_list_set(flu_list *l, const char *key, void *item)
-{
-  flu_list_setk(l, strdup(key), item, 0);
-}
-
 void flu_list_setk(flu_list *l, char *key, void *item, int set_as_last)
 {
   if (set_as_last)
@@ -844,9 +839,24 @@ void flu_list_setk(flu_list *l, char *key, void *item, int set_as_last)
   }
 }
 
-void flu_list_set_last(flu_list *l, const char *key, void *item)
+void flu_list_set(flu_list *l, const char *key, ...)
 {
-  flu_list_add(l, item); l->last->key = strdup(key);
+  va_list ap; va_start(ap, key);
+  char *k = flu_svprintf(key, ap);
+  void *item = va_arg(ap, void *);
+  va_end(ap);
+
+  flu_list_setk(l, k, item, 0);
+}
+
+void flu_list_set_last(flu_list *l, const char *key, ...)
+{
+  va_list ap; va_start(ap, key);
+  char *k = flu_svprintf(key, ap);
+  void *item = va_arg(ap, void *);
+  va_end(ap);
+
+  flu_list_add(l, item); l->last->key = k;
 }
 
 static flu_node *flu_list_getn(flu_list *l, const char *key)
