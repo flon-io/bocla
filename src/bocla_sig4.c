@@ -95,15 +95,14 @@ static char *bin_to_hex(unsigned char *data, size_t len)
   return r;
 }
 
-static char *string_to_sign()
+static char *sha256(char *data, ssize_t len)
 {
-  return strdup("nada nada nada");
-}
+  if (len < 0) len = strlen(data);
 
-static char *signing_key()
-{
-  //unsigned char *date_key = ...
-  return strdup("nada nada nada");
+  unsigned char h[SHA256_DIGEST_LENGTH];
+  SHA256((unsigned char *)data, len, h);
+
+  return bin_to_hex(h, SHA256_DIGEST_LENGTH);
 }
 
 static unsigned char *hmac_sha256(const char *key, const char *data)
@@ -113,6 +112,35 @@ static unsigned char *hmac_sha256(const char *key, const char *data)
     key, strlen(key),
     (unsigned char *)data, strlen(data),
     NULL, NULL);
+}
+
+static char *canonical_request()
+{
+  return strdup("vraiment nada");
+}
+
+static char *string_to_sign(fcla_sig4_session *s, flu_dict *headers)
+{
+  char *d = flu_list_get(headers, "x-%s-date", s->header);
+  char *sd = strndup(d, 8);
+
+  flu_sbuffer *b = flu_sbuffer_malloc();
+
+  flu_sbputs(b, s->provider_u); flu_sbputs(b, "4-HMAC-256\n");
+  flu_sbputs(b, d); flu_sbputc(b, '\n');
+
+  flu_sbprintf(
+    b, "%s/%s/%s/%s4_request\n", sd, s->region, s->service, s->provider);
+
+  flu_sbputs(b, sha256(canonical_request(), -1));
+
+  return flu_sbuffer_to_string(b);
+}
+
+static char *signing_key()
+{
+  //unsigned char *date_key = ...
+  return strdup("nada nada nada");
 }
 
 static char *to_low(const char *s)
@@ -140,7 +168,7 @@ static char *signed_headers(flu_dict *headers)
   }
   flu_list_free(d);
 
-  flu_list_isort(l, strcmp);
+  flu_list_isort(l, (int (*)(const void *, const void *))strcmp);
 
   flu_sbuffer *b = flu_sbuffer_malloc();
 
@@ -155,12 +183,13 @@ static char *signed_headers(flu_dict *headers)
 }
 
 static char *signature(
-  fcla_sig4_session *s)
+  fcla_sig4_session *s, flu_dict *headers)
 {
+  puts("***"); flu_putf(string_to_sign(s, headers)); puts("***");
   return bin_to_hex(
     hmac_sha256(
       signing_key(),
-      string_to_sign()),
+      string_to_sign(s, headers)),
     32);
 }
 
@@ -187,17 +216,11 @@ void fcla_sig4_sign(
     flu_list_set(headers, "host", strdup(host));
   }
 
-  unsigned char h[SHA256_DIGEST_LENGTH];
-  SHA256((unsigned char *)body, bodyl, h);
-
-  flu_list_set(
-    headers,
-    "x-%s-content-sha256", s->header,
-    bin_to_hex(h, SHA256_DIGEST_LENGTH));
+  flu_list_set(headers, "x-%s-content-sha256", s->header, sha256(body, bodyl));
 
   char *sh = signed_headers(headers);
 
-  char *sig = signature(s);
+  char *sig = signature(s, headers);
 
   flu_sbuffer *a = flu_sbuffer_malloc();
 
