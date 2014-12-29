@@ -36,6 +36,7 @@ describe "sig4:"
     it "signs a GET request"
     {
       headers = flu_list_malloc();
+      flu_list_sets(headers, "Range", "bytes=0-9");
 
       fcla_sig4_sign(
         c,

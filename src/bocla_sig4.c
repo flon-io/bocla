@@ -65,7 +65,7 @@ void fcla_sig4_context_free(fcla_sig4_context *c)
   free(c);
 }
 
-static char *to_hex_string(unsigned char *data)
+static char *sha_to_hex(unsigned char *data)
 {
   char *r = calloc(65, sizeof(char));
 
@@ -73,6 +73,31 @@ static char *to_hex_string(unsigned char *data)
     sprintf(r + 2 * i, "%02x", data[i]);
 
   return r;
+}
+
+static char *string_to_sign()
+{
+}
+
+static char *signing_key()
+{
+  //unsigned char *date_key = ...
+}
+
+static unsigned char *hmac_sha256(const char *key, const char *data)
+{
+  return HMAC(
+    EVP_sha256(),
+    key, strlen(key),
+    (unsigned char *)data, strlen(data),
+    NULL, NULL);
+}
+
+static char *signature()
+{
+  return hmac_sha256(
+    signing_key(),
+    string_to_sign());
 }
 
 void fcla_sig4_sign(
@@ -91,7 +116,7 @@ void fcla_sig4_sign(
   unsigned char h[SHA256_DIGEST_LENGTH];
   SHA256((unsigned char *)body, bodyl, h);
 
-  flu_list_set(headers, "x-%s-content-sha256", c->provider, to_hex_string(h));
+  flu_list_set(headers, "x-%s-content-sha256", c->provider, sha_to_hex(h));
 
 flu_putf(flu_list_to_s(headers));
 
