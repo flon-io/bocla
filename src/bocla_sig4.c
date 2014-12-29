@@ -27,6 +27,7 @@
 
 #define _POSIX_C_SOURCE 200809L
 
+#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 #include <openssl/sha.h>
@@ -37,51 +38,63 @@
 #include "bocla_sig4.h"
 
 
-fcla_sig4_context *fcla_sig4_context_init(const char *path)
+fcla_sig4_session *fcla_sig4_session_init(
+  const char *path, const char *service, const char *region)
 {
   flu_dict *d = flu_readdict(path);
   if (d == NULL) return NULL; // failure
 
-  fcla_sig4_context *c = calloc(1, sizeof(fcla_sig4_context));
+  fcla_sig4_session *s = calloc(1, sizeof(fcla_sig4_session));
 
-  c->provider = flu_list_get(d, "provider");
-  c->aki = flu_list_get(d, "aki");
-  c->sak = flu_list_get(d, "sak");
+  s->provider = flu_list_get(d, "provider");
+  s->aki = flu_list_get(d, "aki");
+  s->sak = flu_list_get(d, "sak");
 
-  if (c->provider == NULL) c->provider = strdup("aws");
+  if (s->provider == NULL) s->provider = strdup("aws");
+
+  size_t l = strlen(s->provider);
+  s->provider_u = calloc(l + 1, sizeof(char));
+  for (size_t i = 0; i < l; ++i) s->provider_u[i] = toupper(s->provider[i]);
+
+  s->service = strdup(service);
+  s->region = strdup(region);
 
   flu_list_free(d);
 
-  return c;
+  return s;
 }
 
-void fcla_sig4_context_free(fcla_sig4_context *c)
+void fcla_sig4_session_free(fcla_sig4_session *c)
 {
   if (c == NULL) return;
 
   free(c->provider);
+  free(c->provider_u);
   free(c->aki);
   free(c->sak);
+  free(c->service);
+  free(c->region);
   free(c);
 }
 
-static char *sha_to_hex(unsigned char *data)
+static char *bin_to_hex(unsigned char *data, size_t len)
 {
-  char *r = calloc(65, sizeof(char));
+  char *r = calloc(2 * len + 1, sizeof(char));
 
-  for (size_t i = 0; i < SHA256_DIGEST_LENGTH; ++i)
-    sprintf(r + 2 * i, "%02x", data[i]);
+  for (size_t i = 0; i < len; ++i) sprintf(r + 2 * i, "%02x", data[i]);
 
   return r;
 }
 
 static char *string_to_sign()
 {
+  return NULL;
 }
 
 static char *signing_key()
 {
   //unsigned char *date_key = ...
+  return NULL;
 }
 
 static unsigned char *hmac_sha256(const char *key, const char *data)
@@ -93,15 +106,18 @@ static unsigned char *hmac_sha256(const char *key, const char *data)
     NULL, NULL);
 }
 
-static char *signature()
+static char *signature(
+  fcla_sig4_session *s)
 {
-  return hmac_sha256(
-    signing_key(),
-    string_to_sign());
+  return bin_to_hex(
+    hmac_sha256(
+      signing_key(),
+      string_to_sign()),
+    32);
 }
 
 void fcla_sig4_sign(
-  fcla_sig4_context *c, char *service, char *region,
+  fcla_sig4_session *s,
   char meth, char *host, char *path, char *query, flu_dict *headers,
   char *body, size_t bodyl)
 {
@@ -111,12 +127,15 @@ void fcla_sig4_sign(
   free(now);
 
   flu_list_set(headers, "date", gmt_date);
-  flu_list_set(headers, "x-%s-date", c->provider, bigt_date);
+  flu_list_set(headers, "x-%s-date", s->provider, bigt_date);
 
   unsigned char h[SHA256_DIGEST_LENGTH];
   SHA256((unsigned char *)body, bodyl, h);
 
-  flu_list_set(headers, "x-%s-content-sha256", c->provider, sha_to_hex(h));
+  flu_list_set(
+    headers,
+    "x-%s-content-sha256", s->provider,
+    bin_to_hex(h, SHA256_DIGEST_LENGTH));
 
 flu_putf(flu_list_to_s(headers));
 

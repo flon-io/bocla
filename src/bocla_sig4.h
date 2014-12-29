@@ -32,15 +32,20 @@
 
 typedef struct {
   char *provider; // usually "aws"
+  char *provider_u; // uppercase
   char *aki;
   char *sak;
-} fcla_sig4_context;
+  char *service;
+  char *region;
+} fcla_sig4_session;
 
-fcla_sig4_context *fcla_sig4_context_init(const char *path);
-void fcla_sig4_context_free(fcla_sig4_context *c);
+fcla_sig4_session *fcla_sig4_session_init(
+  const char *path, const char *region, const char *service);
+
+void fcla_sig4_session_free(fcla_sig4_session *c);
 
 void fcla_sig4_sign(
-  fcla_sig4_context *c, char *service, char *region,
+  fcla_sig4_session *s,
   char meth, char *host, char *path, char *query, flu_dict *headers,
   char *body, size_t bodyl);
 

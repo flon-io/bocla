@@ -15,21 +15,16 @@ describe "sig4:"
 {
   before each
   {
-    fcla_sig4_context *c = fcla_sig4_context_init("../.aws");
+    fcla_sig4_session *s =
+      fcla_sig4_session_init("../.aws", "s3", "us-east-1");
 
     flu_dict *headers = NULL;
   }
   after each
   {
-    fcla_sig4_context_free(c);
+    fcla_sig4_session_free(s);
     flu_list_free_all(headers);
   }
-
-  //void fcla_sig4_sign(
-  //  fcla_sig4_context *c,
-  //  char meth, char *host, char *path, char *query,
-  //  flu_dict *headers,
-  //  char *body, ssize_t bodyl);
 
   describe "fcla_sig4_sign()"
   {
@@ -39,8 +34,7 @@ describe "sig4:"
       flu_list_sets(headers, "Range", "bytes=0-9");
 
       fcla_sig4_sign(
-        c,
-        "s3", "us-east-1",
+        s,
         'g', "examplebucket.s3.amazonaws.com", "/test.txt", "",
         headers,
         "", 0); // empty body
