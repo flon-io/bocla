@@ -122,15 +122,17 @@ static char *canonical_request()
 static char *string_to_sign(fcla_sig4_session *s, flu_dict *headers)
 {
   char *d = flu_list_get(headers, "x-%s-date", s->header);
-  char *sd = strndup(d, 8);
 
   flu_sbuffer *b = flu_sbuffer_malloc();
 
-  flu_sbputs(b, s->provider_u); flu_sbputs(b, "4-HMAC-256\n");
-  flu_sbputs(b, d); flu_sbputc(b, '\n');
+  flu_sbputs(b, s->provider_u);
+  flu_sbputs(b, "4-HMAC-256\n");
 
-  flu_sbprintf(
-    b, "%s/%s/%s/%s4_request\n", sd, s->region, s->service, s->provider);
+  flu_sbputs(b, d);
+  flu_sbputc(b, '\n');
+
+  flu_sbwrite(b, d, 8);
+  flu_sbprintf(b, "/%s/%s/%s4_request\n", s->region, s->service, s->provider);
 
   flu_sbputs(b, sha256(canonical_request(), -1));
 
