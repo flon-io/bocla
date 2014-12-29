@@ -191,10 +191,7 @@ fcla_response *fcla_do_request(
     flu_list *tl = flu_list_dtrim(headers);
     for (flu_node *n = tl->first; n != NULL; n = n->next)
     {
-      if (
-        *n->key == '_' &&
-        (n->key[1] == 'u' || n->key[1] == 'p' || n->key[1] == 'v')
-      ) continue;
+      if (*n->key == '_' && strchr("upvd", n->key[1])) continue;
 
       char *s = flu_sprintf("%s: %s", n->key, (char *)n->item);
       cheaders = curl_slist_append(cheaders, s);

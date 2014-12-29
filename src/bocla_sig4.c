@@ -88,13 +88,13 @@ static char *bin_to_hex(unsigned char *data, size_t len)
 
 static char *string_to_sign()
 {
-  return NULL;
+  return strdup("nada nada nada");
 }
 
 static char *signing_key()
 {
   //unsigned char *date_key = ...
-  return NULL;
+  return strdup("nada nada nada");
 }
 
 static unsigned char *hmac_sha256(const char *key, const char *data)
@@ -104,6 +104,11 @@ static unsigned char *hmac_sha256(const char *key, const char *data)
     key, strlen(key),
     (unsigned char *)data, strlen(data),
     NULL, NULL);
+}
+
+static char *signed_headers(flu_dict *headers)
+{
+  return strdup("host;range");
 }
 
 static char *signature(
@@ -121,7 +126,12 @@ void fcla_sig4_sign(
   char meth, char *host, char *path, char *query, flu_dict *headers,
   char *body, size_t bodyl)
 {
-  struct timespec *now = flu_now();
+  struct timespec *now = NULL;
+  flu_node *nnow = flu_list_getn(headers, "_date");
+  if (nnow) { now = nnow->item; nnow->item = NULL; }
+  else { now = flu_now(); }
+
+  char *short_date = flu_tstamp(now, 1, 'd');
   char *gmt_date = flu_tstamp(now, 1, 'g');
   char *bigt_date = flu_tstamp(now, 1, 'T');
   free(now);
@@ -137,12 +147,33 @@ void fcla_sig4_sign(
     "x-%s-content-sha256", s->provider,
     bin_to_hex(h, SHA256_DIGEST_LENGTH));
 
-flu_putf(flu_list_to_s(headers));
+  char *sh = signed_headers(headers);
+
+  char *sig = signature(s);
+
+  flu_sbuffer *a = flu_sbuffer_malloc();
+
+  flu_sbprintf(
+    a, "%s4-HMAC-SHA256 ", s->provider_u);
+  flu_sbprintf(
+    a, "Credential=%s/%s/%s/%s/%s4_request,",
+    s->aki, short_date, s->region, s->service, s->provider);
+  flu_sbprintf(
+    a, "SignedHeaders=%s,", sh);
+  flu_sbprintf(
+    a, "Signature=%s", sig);
+
+  flu_putf(flu_list_to_sm(headers));
+
+  free(sh);
+  free(sig);
 
   //expect(flu_list_get(headers, "Authorization") === ""
   //  "AWS4-HMAC-SHA256 "
   //  "Credential=AKIAIOSFODNN7EXAMPLE/20130524/us-east-1/s3/aws4_request,"
   //  "SignedHeaders=host;range;x-amz-content-sha256;x-amz-date,"
   //  "Signature=f0e8bdb87c964420e857bd35b5d6ed310bd44f0170aba48dd91039c6036bdb41");
+
+  flu_list_set(headers, "Authorization", flu_sbuffer_to_string(a));
 }
 
