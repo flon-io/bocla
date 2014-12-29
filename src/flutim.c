@@ -148,6 +148,7 @@ char *flu_tstamp(struct timespec *ts, int utc, char format)
   strftime(r, 32, "%Y%m%d.%H%M%S", tm);
   size_t l = strlen(r);
 
+  if (format == 'd') { *(r + l - 7) = '\0'; return r; }
   if (format == 'h') { *(r + l - 2) = '\0'; return r; }
   if (format == 's') { return r; }
 

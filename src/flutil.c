@@ -815,7 +815,7 @@ static char *list_to_s(flu_list *l, char mode)
     if (multi) flu_sbputs(b, "\n  ");
     if (isdict) flu_sbprintf(b, "%s:", n->key);
     if (multi) flu_sbputc(b, ' ');
-    if (mode == 's') flu_sbputs(b, (char *)n->item);
+    if (mode == 's') flu_sbputs(b, n->item ? (char *)n->item : "NULL");
     else flu_sbprintf(b, "%p", n->item);
   }
   if (multi && l->first) flu_sbputc(b, '\n');
@@ -870,7 +870,7 @@ void flu_list_sets(flu_list *l, const char *key, ...)
   flu_list_setk(l, k, v, 0);
 }
 
-static flu_node *flu_list_getn(flu_list *l, const char *key)
+flu_node *flu_list_getn(flu_list *l, const char *key)
 {
   for (flu_node *n = l->first; n != NULL; n = n->next)
   {
@@ -879,11 +879,31 @@ static flu_node *flu_list_getn(flu_list *l, const char *key)
   return NULL;
 }
 
-void *flu_list_getd(flu_list *l, const char *key, void *def)
+void *flu_list_getd(flu_list *l, const char *key, ...)
 {
-  flu_node *n = flu_list_getn(l, key);
+  va_list ap; va_start(ap, key);
+  char *k = flu_svprintf(key, ap);
+  void *def = va_arg(ap, void *);
+  va_end(ap);
+
+  flu_node *n = flu_list_getn(l, k);
+
+  free(k);
 
   return n ? n->item : def;
+}
+
+void *flu_list_get(flu_list *l, const char *key, ...)
+{
+  va_list ap; va_start(ap, key);
+  char *k = flu_svprintf(key, ap);
+  va_end(ap);
+
+  flu_node *n = flu_list_getn(l, k);
+
+  free(k);
+
+  return n ? n->item : NULL;
 }
 
 flu_list *flu_list_dtrim(flu_list *l)

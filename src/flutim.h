@@ -58,6 +58,7 @@ long long flu_do_msleep(long long milliseconds);
 /* Formats the given time into a string.
  *
  * 'z' --> "2014-11-01T16:34:01Z"
+ * 'd' --> "20141101"
  * 'h' --> "20141101.1634"
  * 's' --> "20141101.163401"
  * 'm' --> "20141101.163401.001"  // milliseconds
