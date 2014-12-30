@@ -76,6 +76,10 @@ int flu_sbputs(flu_sbuffer *b, const char *s);
  */
 int flu_sbputs_n(flu_sbuffer *b, const char *s, size_t n);
 
+/* Puts a string to the buffer then frees the string.
+ */
+int flu_sbputs_f(flu_sbuffer *b, char *s);
+
 /* Merely encapsulates a fwrite().
  */
 size_t flu_sbwrite(flu_sbuffer *b, const char *s, size_t n);
