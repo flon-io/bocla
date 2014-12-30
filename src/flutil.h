@@ -497,5 +497,10 @@ long long flu_stoll(char *s, size_t l, int base);
  */
 int flu_putf(char *s);
 
+/* Overwrites a string with zeros and then frees it.
+ * If n == -1, will call strlen() to determine how many zeros to write.
+ */
+void flu_zero_and_free(char *s, ssize_t n);
+
 #endif // FLON_FLUTIL_H
 

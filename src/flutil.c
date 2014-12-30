@@ -1244,3 +1244,9 @@ char *flu_pline(const char *cmd, ...)
   return r;
 }
 
+void flu_zero_and_free(char *s, ssize_t n)
+{
+  memset(s, 0, n < 0 ? strlen(s) : n);
+  free(s);
+}
+
