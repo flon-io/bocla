@@ -30,6 +30,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <openssl/sha.h>
 #include <openssl/hmac.h>
 
@@ -135,7 +136,7 @@ static char *canonical_query_string(
   fcla_sig4_session *s, fcla_sig4_request *r)
 {
   return r->query;
-    // TODO: sorted by query parameter
+    // TODO: sorted by query parameters
 }
 
 static char *hcaseget(flu_dict *hs, const char *k)
@@ -160,7 +161,7 @@ static char *canonical_headers(
     flu_sbputs(b, key);
     flu_sbputc(b, ':');
     flu_sbputs(b, hcaseget(r->headers, key));
-    if (fn != l->last) flu_sbputc(b, '\n');
+    flu_sbputc(b, '\n');
   }
   flu_list_free_all(l);
 
@@ -242,12 +243,15 @@ static char *string_to_sign(
   flu_sbwrite(b, d, 8);
   flu_sbprintf(b, "/%s/%s/%s4_request\n", s->region, s->service, s->provider);
 
-  puts("...");
+  puts("... canonical_request");
   flu_putf(canonical_request(s, r));
   puts("...");
   flu_sbputs(b, sha256(canonical_request(s, r), -1));
 
-  return flu_sbuffer_to_string(b);
+  //return flu_sbuffer_to_string(b);
+  char *sts = flu_sbuffer_to_string(b);
+  puts("*** string_to_sign"); flu_putf(sts); puts("***");
+  return sts;
 }
 
 static char *signing_key(fcla_sig4_session *s, fcla_sig4_request *r)
@@ -258,7 +262,6 @@ static char *signing_key(fcla_sig4_session *s, fcla_sig4_request *r)
 
 static char *signature(fcla_sig4_session *s, fcla_sig4_request *r)
 {
-  puts("***"); flu_putf(string_to_sign(s, r)); puts("***");
   return bin_to_hex(hmac_sha256(signing_key(s, r), string_to_sign(s, r)), 32);
 }
 
