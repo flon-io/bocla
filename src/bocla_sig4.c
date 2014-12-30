@@ -114,35 +114,17 @@ static unsigned char *hmac_sha256(const char *key, const char *data)
     NULL, NULL);
 }
 
-static char *canonical_request()
+static char *canonical_uri()
 {
-  return strdup("vraiment nada");
+  return strdup("canonical URI");
 }
-
-static char *string_to_sign(fcla_sig4_session *s, flu_dict *headers)
+static char *canonical_query_string()
 {
-  char *d = flu_list_get(headers, "x-%s-date", s->header);
-
-  flu_sbuffer *b = flu_sbuffer_malloc();
-
-  flu_sbputs(b, s->provider_u);
-  flu_sbputs(b, "4-HMAC-256\n");
-
-  flu_sbputs(b, d);
-  flu_sbputc(b, '\n');
-
-  flu_sbwrite(b, d, 8);
-  flu_sbprintf(b, "/%s/%s/%s4_request\n", s->region, s->service, s->provider);
-
-  flu_sbputs(b, sha256(canonical_request(), -1));
-
-  return flu_sbuffer_to_string(b);
+  return strdup("canonical query string");
 }
-
-static char *signing_key()
+static char *canonical_headers()
 {
-  //unsigned char *date_key = ...
-  return strdup("nada nada nada");
+  return strdup("canonical query string");
 }
 
 static char *to_low(const char *s)
@@ -184,14 +166,64 @@ static char *signed_headers(flu_dict *headers)
   return flu_sbuffer_to_string(b);
 }
 
-static char *signature(
-  fcla_sig4_session *s, flu_dict *headers)
+static char *canonical_request(
+  fcla_sig4_session *s, char meth, flu_dict *headers)
 {
-  puts("***"); flu_putf(string_to_sign(s, headers)); puts("***");
+  flu_sbuffer *b = flu_sbuffer_malloc();
+
+  if (meth == 'g') flu_sbputs(b, "GET\n");
+  else if (meth == 'p') flu_sbputs(b, "POST\n");
+  else if (meth == 'u') flu_sbputs(b, "PUT\n");
+  else if (meth == 'd') flu_sbputs(b, "DELETE\n");
+  else flu_sbputs(b, "HEAD\n"); // :-p
+
+  flu_sbputs(b, canonical_uri());
+  flu_sbputs(b, canonical_query_string());
+  flu_sbputs(b, canonical_headers());
+  flu_sbputs(b, signed_headers(headers));
+  flu_sbputs(b, flu_list_get(headers, "x-%s-content-sha256", s->header));
+
+  return flu_sbuffer_to_string(b);
+}
+
+static char *string_to_sign(
+  fcla_sig4_session *s, char meth, flu_dict *headers)
+{
+  char *d = flu_list_get(headers, "x-%s-date", s->header);
+
+  flu_sbuffer *b = flu_sbuffer_malloc();
+
+  flu_sbputs(b, s->provider_u);
+  flu_sbputs(b, "4-HMAC-256\n");
+
+  flu_sbputs(b, d);
+  flu_sbputc(b, '\n');
+
+  flu_sbwrite(b, d, 8);
+  flu_sbprintf(b, "/%s/%s/%s4_request\n", s->region, s->service, s->provider);
+
+  puts("...");
+  flu_putf(canonical_request(s, meth, headers));
+  puts("...");
+  flu_sbputs(b, sha256(canonical_request(s, meth, headers), -1));
+
+  return flu_sbuffer_to_string(b);
+}
+
+static char *signing_key()
+{
+  //unsigned char *date_key = ...
+  return strdup("nada nada nada");
+}
+
+static char *signature(
+  fcla_sig4_session *s, char meth, flu_dict *headers)
+{
+  puts("***"); flu_putf(string_to_sign(s, meth, headers)); puts("***");
   return bin_to_hex(
     hmac_sha256(
       signing_key(),
-      string_to_sign(s, headers)),
+      string_to_sign(s, meth, headers)),
     32);
 }
 
@@ -222,7 +254,7 @@ void fcla_sig4_sign(
 
   char *sh = signed_headers(headers);
 
-  char *sig = signature(s, headers);
+  char *sig = signature(s, meth, headers);
 
   flu_sbuffer *a = flu_sbuffer_malloc();
 
