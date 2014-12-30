@@ -128,17 +128,43 @@ static unsigned char *hmac_sha256(const char *key, const char *data)
 static char *canonical_uri(
   fcla_sig4_session *s, fcla_sig4_request *r)
 {
-  return strdup("canonical URI");
+  return r->path;
 }
+
 static char *canonical_query_string(
   fcla_sig4_session *s, fcla_sig4_request *r)
 {
-  return strdup("canonical query string");
+  return r->query;
+    // TODO: sorted by query parameter
 }
+
+static char *hcaseget(flu_dict *hs, const char *k)
+{
+  for (flu_node *fn = hs->first; fn; fn = fn->next)
+  {
+    if (strcasecmp(fn->key, k) == 0) return fn->item;
+  }
+
+  return NULL;
+}
+
 static char *canonical_headers(
   fcla_sig4_session *s, fcla_sig4_request *r)
 {
-  return strdup("canonical query string");
+  flu_sbuffer *b = flu_sbuffer_malloc();
+
+  flu_list *l = flu_split(r->signed_headers, ";");
+  for (flu_node *fn = l->first; fn; fn = fn->next)
+  {
+    char *key = fn->item; if (*key == '_') continue;
+    flu_sbputs(b, key);
+    flu_sbputc(b, ':');
+    flu_sbputs(b, hcaseget(r->headers, key));
+    if (fn != l->last) flu_sbputc(b, '\n');
+  }
+  flu_list_free_all(l);
+
+  return flu_sbuffer_to_string(b);
 }
 
 static char *to_low(const char *s)
@@ -191,10 +217,10 @@ static char *canonical_request(
   else if (r->meth == 'd') flu_sbputs(b, "DELETE\n");
   else flu_sbputs(b, "HEAD\n"); // :-p
 
-  flu_sbputs(b, canonical_uri(s, r));
-  flu_sbputs(b, canonical_query_string(s, r));
-  flu_sbputs(b, canonical_headers(s, r));
-  flu_sbputs(b, r->signed_headers);
+  flu_sbputs(b, canonical_uri(s, r)); flu_sbputc(b, '\n');
+  flu_sbputs(b, canonical_query_string(s, r)); flu_sbputc(b, '\n');
+  flu_sbputs(b, canonical_headers(s, r)); flu_sbputc(b, '\n');
+  flu_sbputs(b, r->signed_headers); flu_sbputc(b, '\n');
   flu_sbputs(b, flu_list_get(r->headers, "x-%s-content-sha256", s->header));
 
   return flu_sbuffer_to_string(b);
