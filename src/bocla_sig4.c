@@ -44,6 +44,7 @@ typedef struct {
   char *host;
   char *path;
   char *query;
+  char *date;
   flu_dict *headers;
   char *signed_headers;
   char *body;
@@ -117,7 +118,7 @@ static char *sha256(char *data, ssize_t len)
   return bin_to_hex(h, SHA256_DIGEST_LENGTH);
 }
 
-static unsigned char *hmac_sha256(const char *key, const char *data)
+static unsigned char *hmac_sha256(char *key, char *data)
 {
   return HMAC(
     EVP_sha256(),
@@ -230,18 +231,16 @@ static char *canonical_request(
 static char *string_to_sign(
   fcla_sig4_session *s, fcla_sig4_request *r)
 {
-  char *d = flu_list_get(r->headers, "x-%s-date", s->header);
-
   flu_sbuffer *b = flu_sbuffer_malloc();
 
   flu_sbputs(b, s->provider_u);
   flu_sbputs(b, "4-HMAC-256\n");
 
-  flu_sbputs(b, d);
+  flu_sbputs(b, r->date);
   flu_sbputc(b, '\n');
 
-  flu_sbwrite(b, d, 8);
-  flu_sbprintf(b, "/%s/%s/%s4_request\n", s->region, s->service, s->provider);
+  flu_sbprintf(
+    b, "%s/%s/%s/%s4_request\n", r->date, s->region, s->service, s->provider);
 
   puts("... canonical_request");
   flu_putf(canonical_request(s, r));
@@ -256,8 +255,25 @@ static char *string_to_sign(
 
 static char *signing_key(fcla_sig4_session *s, fcla_sig4_request *r)
 {
-  //unsigned char *date_key = ...
-  return strdup("nada nada nada");
+  char *sak = flu_sprintf("%s4%s", s->provider_u, s->sak);
+
+  char *date_key = hmac_sha256(sak, r->date);
+  char *date_region_key = hmac_sha256(date_key, s->region);
+  char *date_region_service_key = hmac_sha256(date_region_key, s->service);
+
+  char *as = flu_sprintf("%s4_request", s->provider);
+  unsigned char *signing_key = hmac_sha256(date_region_service_key, as);
+
+  char *ret = bin_to_hex(signing_key, 32);
+
+  //flu_zero_and_free(sak, -1);
+  //free(date_key);
+  //free(date_region_key);
+  //free(date_region_service_key);
+  //free(as);
+  //free(signing_key);
+
+  return ret;
 }
 
 static char *signature(fcla_sig4_session *s, fcla_sig4_request *r)
@@ -284,7 +300,7 @@ void fcla_sig4_sign(
   if (nnow) { now = nnow->item; nnow->item = NULL; }
   else { now = flu_now(); }
 
-  char *short_date = flu_tstamp(now, 1, 'd');
+  req.date = flu_tstamp(now, 1, 'd');
   char *gmt_date = flu_tstamp(now, 1, 'g');
   char *bigt_date = flu_tstamp(now, 1, 'T');
   free(now);
@@ -310,7 +326,7 @@ void fcla_sig4_sign(
     a, "%s4-HMAC-SHA256 ", s->provider_u);
   flu_sbprintf(
     a, "Credential=%s/%s/%s/%s/%s4_request,",
-    s->aki, short_date, s->region, s->service, s->provider);
+    s->aki, req.date, s->region, s->service, s->provider);
   flu_sbprintf(
     a, "SignedHeaders=%s,", req.signed_headers);
   flu_sbprintf(
