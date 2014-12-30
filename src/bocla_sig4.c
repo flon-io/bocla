@@ -38,6 +38,17 @@
 #include "bocla_sig4.h"
 
 
+typedef struct {
+  char meth;
+  char *host;
+  char *path;
+  char *query;
+  flu_dict *headers;
+  char *signed_headers;
+  char *body;
+  size_t bodyl;
+} fcla_sig4_request;
+
 fcla_sig4_session *fcla_sig4_session_init(
   const char *path, const char *service, const char *region)
 {
@@ -114,15 +125,18 @@ static unsigned char *hmac_sha256(const char *key, const char *data)
     NULL, NULL);
 }
 
-static char *canonical_uri()
+static char *canonical_uri(
+  fcla_sig4_session *s, fcla_sig4_request *r)
 {
   return strdup("canonical URI");
 }
-static char *canonical_query_string()
+static char *canonical_query_string(
+  fcla_sig4_session *s, fcla_sig4_request *r)
 {
   return strdup("canonical query string");
 }
-static char *canonical_headers()
+static char *canonical_headers(
+  fcla_sig4_session *s, fcla_sig4_request *r)
 {
   return strdup("canonical query string");
 }
@@ -167,29 +181,29 @@ static char *signed_headers(flu_dict *headers)
 }
 
 static char *canonical_request(
-  fcla_sig4_session *s, char meth, flu_dict *headers)
+  fcla_sig4_session *s, fcla_sig4_request *r)
 {
   flu_sbuffer *b = flu_sbuffer_malloc();
 
-  if (meth == 'g') flu_sbputs(b, "GET\n");
-  else if (meth == 'p') flu_sbputs(b, "POST\n");
-  else if (meth == 'u') flu_sbputs(b, "PUT\n");
-  else if (meth == 'd') flu_sbputs(b, "DELETE\n");
+  if (r->meth == 'g') flu_sbputs(b, "GET\n");
+  else if (r->meth == 'p') flu_sbputs(b, "POST\n");
+  else if (r->meth == 'u') flu_sbputs(b, "PUT\n");
+  else if (r->meth == 'd') flu_sbputs(b, "DELETE\n");
   else flu_sbputs(b, "HEAD\n"); // :-p
 
-  flu_sbputs(b, canonical_uri());
-  flu_sbputs(b, canonical_query_string());
-  flu_sbputs(b, canonical_headers());
-  flu_sbputs(b, signed_headers(headers));
-  flu_sbputs(b, flu_list_get(headers, "x-%s-content-sha256", s->header));
+  flu_sbputs(b, canonical_uri(s, r));
+  flu_sbputs(b, canonical_query_string(s, r));
+  flu_sbputs(b, canonical_headers(s, r));
+  flu_sbputs(b, r->signed_headers);
+  flu_sbputs(b, flu_list_get(r->headers, "x-%s-content-sha256", s->header));
 
   return flu_sbuffer_to_string(b);
 }
 
 static char *string_to_sign(
-  fcla_sig4_session *s, char meth, flu_dict *headers)
+  fcla_sig4_session *s, fcla_sig4_request *r)
 {
-  char *d = flu_list_get(headers, "x-%s-date", s->header);
+  char *d = flu_list_get(r->headers, "x-%s-date", s->header);
 
   flu_sbuffer *b = flu_sbuffer_malloc();
 
@@ -203,28 +217,23 @@ static char *string_to_sign(
   flu_sbprintf(b, "/%s/%s/%s4_request\n", s->region, s->service, s->provider);
 
   puts("...");
-  flu_putf(canonical_request(s, meth, headers));
+  flu_putf(canonical_request(s, r));
   puts("...");
-  flu_sbputs(b, sha256(canonical_request(s, meth, headers), -1));
+  flu_sbputs(b, sha256(canonical_request(s, r), -1));
 
   return flu_sbuffer_to_string(b);
 }
 
-static char *signing_key()
+static char *signing_key(fcla_sig4_session *s, fcla_sig4_request *r)
 {
   //unsigned char *date_key = ...
   return strdup("nada nada nada");
 }
 
-static char *signature(
-  fcla_sig4_session *s, char meth, flu_dict *headers)
+static char *signature(fcla_sig4_session *s, fcla_sig4_request *r)
 {
-  puts("***"); flu_putf(string_to_sign(s, meth, headers)); puts("***");
-  return bin_to_hex(
-    hmac_sha256(
-      signing_key(),
-      string_to_sign(s, meth, headers)),
-    32);
+  puts("***"); flu_putf(string_to_sign(s, r)); puts("***");
+  return bin_to_hex(hmac_sha256(signing_key(s, r), string_to_sign(s, r)), 32);
 }
 
 void fcla_sig4_sign(
@@ -232,8 +241,17 @@ void fcla_sig4_sign(
   char meth, char *host, char *path, char *query, flu_dict *headers,
   char *body, size_t bodyl)
 {
+  fcla_sig4_request req;
+  req.meth = meth;
+  req.host = host;
+  req.path = path;
+  req.query = query;
+  req.headers = headers;
+  req.body = body;
+  req.bodyl = bodyl;
+
   struct timespec *now = NULL;
-  flu_node *nnow = flu_list_getn(headers, "_date");
+  flu_node *nnow = flu_list_getn(req.headers, "_date");
   if (nnow) { now = nnow->item; nnow->item = NULL; }
   else { now = flu_now(); }
 
@@ -242,19 +260,20 @@ void fcla_sig4_sign(
   char *bigt_date = flu_tstamp(now, 1, 'T');
   free(now);
 
-  flu_list_set(headers, "date", gmt_date);
-  flu_list_set(headers, "x-%s-date", s->header, bigt_date);
+  flu_list_set(req.headers, "date", gmt_date);
+  flu_list_set(req.headers, "x-%s-date", s->header, bigt_date);
 
-  if (flu_list_get(headers, "Host") == NULL)
+  if (flu_list_get(req.headers, "Host") == NULL)
   {
-    flu_list_set(headers, "host", strdup(host));
+    flu_list_set(req.headers, "host", strdup(host));
   }
 
-  flu_list_set(headers, "x-%s-content-sha256", s->header, sha256(body, bodyl));
+  flu_list_set(
+    req.headers, "x-%s-content-sha256", s->header, sha256(body, bodyl));
 
-  char *sh = signed_headers(headers);
+  req.signed_headers = signed_headers(req.headers);
 
-  char *sig = signature(s, meth, headers);
+  char *sig = signature(s, &req);
 
   flu_sbuffer *a = flu_sbuffer_malloc();
 
@@ -264,13 +283,13 @@ void fcla_sig4_sign(
     a, "Credential=%s/%s/%s/%s/%s4_request,",
     s->aki, short_date, s->region, s->service, s->provider);
   flu_sbprintf(
-    a, "SignedHeaders=%s,", sh);
+    a, "SignedHeaders=%s,", req.signed_headers);
   flu_sbprintf(
     a, "Signature=%s", sig);
 
   flu_putf(flu_list_to_sm(headers));
 
-  free(sh);
+  free(req.signed_headers);
   free(sig);
 
   //expect(flu_list_get(headers, "Authorization") === ""
