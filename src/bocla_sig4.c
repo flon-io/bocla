@@ -108,7 +108,7 @@ static char *bin_to_hex(unsigned char *data, size_t len)
   return r;
 }
 
-static char *sha256(char *data, ssize_t len)
+static char *sha256(void *data, ssize_t len)
 {
   if (len < 0) len = strlen(data);
 
@@ -118,13 +118,24 @@ static char *sha256(char *data, ssize_t len)
   return bin_to_hex(h, SHA256_DIGEST_LENGTH);
 }
 
-static unsigned char *hmac_sha256(char *key, char *data)
+static unsigned char *hmac_sha256(void *key, ssize_t klen, char *data)
 {
+  unsigned char *r = calloc(SHA256_DIGEST_LENGTH, sizeof(char));
+
   return HMAC(
     EVP_sha256(),
-    key, strlen(key),
+    key, klen < 0 ? strlen(key) : klen,
     (unsigned char *)data, strlen(data),
-    NULL, NULL);
+    r, NULL);
+}
+
+static char *hmac_sha256_hex(void *key, ssize_t klen, char *data)
+{
+  unsigned char *sha = hmac_sha256(key, klen, data);
+  char *hex = bin_to_hex(sha, 32);
+  free(sha);
+
+  return hex;
 }
 
 static char *canonical_uri(
@@ -257,28 +268,29 @@ static char *signing_key(fcla_sig4_session *s, fcla_sig4_request *r)
 {
   char *sak = flu_sprintf("%s4%s", s->provider_u, s->sak);
 
-  char *date_key = hmac_sha256(sak, r->date);
-  char *date_region_key = hmac_sha256(date_key, s->region);
-  char *date_region_service_key = hmac_sha256(date_region_key, s->service);
+  unsigned char *date_key =
+    hmac_sha256(sak, -1, r->date);
+  unsigned char *date_region_key =
+    hmac_sha256(date_key, 32, s->region);
+  unsigned char *date_region_service_key =
+    hmac_sha256(date_region_key, 32, s->service);
 
   char *as = flu_sprintf("%s4_request", s->provider);
-  unsigned char *signing_key = hmac_sha256(date_region_service_key, as);
-
-  char *ret = bin_to_hex(signing_key, 32);
+  char *signing_key = hmac_sha256_hex(date_region_service_key, 32, as);
 
   //flu_zero_and_free(sak, -1);
   //free(date_key);
   //free(date_region_key);
   //free(date_region_service_key);
   //free(as);
-  //free(signing_key);
 
-  return ret;
+  return signing_key;
 }
 
 static char *signature(fcla_sig4_session *s, fcla_sig4_request *r)
 {
-  return bin_to_hex(hmac_sha256(signing_key(s, r), string_to_sign(s, r)), 32);
+  //return bin_to_hex(hmac_sha256(signing_key(s, r), string_to_sign(s, r)), 32);
+  return hmac_sha256_hex(signing_key(s, r), 32, string_to_sign(s, r));
 }
 
 void fcla_sig4_sign(
