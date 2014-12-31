@@ -60,10 +60,9 @@ describe "sig4:"
       free(req);
     }
 
-//152 241 216 137 254 196 244 66 26 220 82 43 171 12 225 248 46 105 41 194 98 237 21 229 169 76 144 239 209 227 176 231
     it "is generated correctly (2)"
     {
-
+      // http://docs.aws.amazon.com/general/latest/gr/sigv4-calculate-signature.html
       fcla_sig4_session *ses = calloc(1, sizeof(fcla_sig4_session));
       ses->provider = "aws";
       ses->provider_u = "AWS";
