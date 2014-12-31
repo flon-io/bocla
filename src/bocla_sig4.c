@@ -246,10 +246,7 @@ static char *string_to_sign(fcla_sig4_session *s, fcla_sig4_request *r)
   flu_sbputs_f(b, sha256(cr, -1));
   free(cr);
 
-  //return flu_sbuffer_to_string(b);
-  char *sts = flu_sbuffer_to_string(b);
-  puts("*** string_to_sign"); puts(sts); puts("***");
-  return sts;
+  return flu_sbuffer_to_string(b);
 }
 
 // specs only
@@ -297,6 +294,7 @@ static char *signature(fcla_sig4_session *s, fcla_sig4_request *r)
 {
   char *sk = signing_key(s, r);
   char *sts = string_to_sign(s, r);
+  puts("*** string_to_sign"); puts(sts); puts("***");
   char *sig = hmac_sha256_hex(sk, 32, sts);
   free(sk);
   free(sts);
