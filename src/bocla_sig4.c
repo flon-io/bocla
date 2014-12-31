@@ -130,13 +130,13 @@ static char *hmac_sha256_hex(void *key, ssize_t klen, char *data)
 static char *canonical_uri(
   fcla_sig4_session *s, fcla_sig4_request *r)
 {
-  return r->path;
+  return strdup(r->path);
 }
 
 static char *canonical_query_string(
   fcla_sig4_session *s, fcla_sig4_request *r)
 {
-  return r->query;
+  return strdup(r->query);
     // TODO: sorted by query parameters
 }
 
@@ -219,8 +219,8 @@ static char *canonical_request(
   else if (r->meth == 'd') flu_sbputs(b, "DELETE\n");
   else flu_sbputs(b, "HEAD\n"); // :-p
 
-  flu_sbputs(b, canonical_uri(s, r)); flu_sbputc(b, '\n');
-  flu_sbputs(b, canonical_query_string(s, r)); flu_sbputc(b, '\n');
+  flu_sbputs_f(b, canonical_uri(s, r)); flu_sbputc(b, '\n');
+  flu_sbputs_f(b, canonical_query_string(s, r)); flu_sbputc(b, '\n');
   flu_sbputs_f(b, canonical_headers(s, r)); flu_sbputc(b, '\n');
   flu_sbputs(b, r->signed_headers); flu_sbputc(b, '\n');
   flu_sbputs(b, flu_list_get(r->headers, "x-%s-content-sha256", s->header));
