@@ -37,9 +37,9 @@ describe "sig4:"
 //kService = 'f72cfd46f26bc4643f06a11eabb6c0ba18780c19a8da0c31ace671265e3c87fa'
 //kSigning = 'f4780e2d9f65fa895f9c67b32ce1baf0b0d8a43505a000a1a9e090d414db404d'
 
-  describe "fcla_sig4_signing_key()"
+  describe "the signing key"
   {
-    it "generates the signing key"
+    it "is generated correctly"
     {
       fcla_sig4_session *ses = calloc(1, sizeof(fcla_sig4_session));
       ses->provider = "aws";
@@ -61,6 +61,45 @@ describe "sig4:"
     }
   }
 
+  describe "the string to sign"
+  {
+    it "is generated correctly"
+    {
+      fcla_sig4_session *ses = calloc(1, sizeof(fcla_sig4_session));
+      ses->provider = "aws";
+      ses->provider_u = "AWS";
+      ses->header = "amz";
+      ses->sak = "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY";
+      ses->region = "us-east-1";
+      ses->service = "s3";
+
+      fcla_sig4_request *req = calloc(1, sizeof(fcla_sig4_request));
+      req->date = "20130524";
+      req->meth = 'g';
+      req->path = "/test.txt";
+      req->query = "";
+      //
+      req->headers = flu_list_malloc();
+      flu_list_sets(
+        req->headers, "Host", "examplebucket.s3.amazonaws.com");
+      flu_list_sets(
+        req->headers, "Range", "bytes=0-9");
+      flu_list_sets(
+        req->headers, "x-amz-date", "20130524T000000Z");
+      flu_list_sets(
+        req->headers, "x-amz-content-sha256",
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
+      //
+      req->signed_headers = "host;range;x-amz-content-sha256;x-amz-date";
+
+      expect(fcla_sig4_string_to_sign(ses, req) ===f ""
+        "AWS4-HMAC-256\n"
+        "20130524\n"
+        "20130524/us-east-1/s3/aws4_request\n"
+        "7344ae5b7ee6c3e7e6b0fe0640412a37625d1fbfff95c48bbb2dc43964946972");
+    }
+  }
+
   describe "fcla_sig4_sign()"
   {
     it "signs a GET request"
@@ -77,6 +116,9 @@ describe "sig4:"
         'g', "examplebucket.s3.amazonaws.com", "/test.txt", "",
         headers,
         "", 0); // empty body
+
+      expect(flu_list_get(headers, "x-amz-date") === ""
+        "20130524T000000Z");
 
       expect(flu_list_get(headers, "x-amz-content-sha256") === ""
         "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");

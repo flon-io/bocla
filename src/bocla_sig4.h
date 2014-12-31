@@ -62,9 +62,11 @@ void fcla_sig4_sign(
   char meth, char *host, char *path, char *query, flu_dict *headers,
   char *body, size_t bodyl);
 
-/* For specs only.
- */
+
+// specs only
+
 char *fcla_sig4_signing_key(fcla_sig4_session *s, fcla_sig4_request *r);
+char *fcla_sig4_string_to_sign(fcla_sig4_session *s, fcla_sig4_request *r);
 
 #endif // FLON_BOCLA_SIG4_H
 
