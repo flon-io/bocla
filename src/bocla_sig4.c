@@ -47,15 +47,17 @@ fcla_sig4_session *fcla_sig4_session_init(
 
   fcla_sig4_session *s = calloc(1, sizeof(fcla_sig4_session));
 
-  s->provider = flu_list_get(d, "provider");
-  s->header = flu_list_get(d, "header");
-  s->aki = flu_list_get(d, "aki");
-  s->sak = flu_list_get(d, "sak");
+  s->provider = strdup(flu_list_get(d, "provider"));
+  s->header = strdup(flu_list_get(d, "header"));
+  s->aki = strdup(flu_list_get(d, "aki"));
+  s->sak = strdup(flu_list_get(d, "sak"));
+
+  flu_list_free_all(d);
 
   if (s->provider == NULL)
   {
     s->provider = strdup("aws");
-    s->header = strdup("amz");
+    free(s->header); s->header = strdup("amz");
   }
   if (s->header == NULL)
   {
@@ -69,8 +71,6 @@ fcla_sig4_session *fcla_sig4_session_init(
   s->service = strdup(service);
   s->region = strdup(region);
 
-  flu_list_free(d);
-
   return s;
 }
 
@@ -80,6 +80,7 @@ void fcla_sig4_session_free(fcla_sig4_session *c)
 
   free(c->provider);
   free(c->provider_u);
+  free(c->header);
   free(c->aki);
   free(c->sak);
   free(c->service);
@@ -220,7 +221,7 @@ static char *canonical_request(
 
   flu_sbputs(b, canonical_uri(s, r)); flu_sbputc(b, '\n');
   flu_sbputs(b, canonical_query_string(s, r)); flu_sbputc(b, '\n');
-  flu_sbputs(b, canonical_headers(s, r)); flu_sbputc(b, '\n');
+  flu_sbputs_f(b, canonical_headers(s, r)); flu_sbputc(b, '\n');
   flu_sbputs(b, r->signed_headers); flu_sbputc(b, '\n');
   flu_sbputs(b, flu_list_get(r->headers, "x-%s-content-sha256", s->header));
 
@@ -240,10 +241,10 @@ static char *string_to_sign(fcla_sig4_session *s, fcla_sig4_request *r)
   flu_sbprintf(
     b, "%s/%s/%s/%s4_request\n", r->date, s->region, s->service, s->provider);
 
-  puts("... canonical_request");
-  flu_putf(canonical_request(s, r));
-  puts("...");
-  flu_sbputs(b, sha256(canonical_request(s, r), -1));
+  char *cr = canonical_request(s, r);
+  puts("... canonical_request"); puts(cr); puts("...");
+  flu_sbputs_f(b, sha256(cr, -1));
+  free(cr);
 
   //return flu_sbuffer_to_string(b);
   char *sts = flu_sbuffer_to_string(b);
@@ -272,11 +273,11 @@ unsigned char *signing_key(fcla_sig4_session *s, fcla_sig4_request *r)
   char *as = flu_sprintf("%s4_request", s->provider);
   unsigned char *signing_key = hmac_sha256(date_region_service_key, 32, as);
 
-  //flu_zero_and_free(sak, -1);
-  //free(date_key);
-  //free(date_region_key);
-  //free(date_region_service_key);
-  //free(as);
+  flu_zero_and_free(sak, -1);
+  free(date_key);
+  free(date_region_key);
+  free(date_region_service_key);
+  free(as);
 
   return signing_key;
 }
@@ -294,7 +295,13 @@ char *fcla_sig4_signing_key(fcla_sig4_session *s, fcla_sig4_request *r)
 
 static char *signature(fcla_sig4_session *s, fcla_sig4_request *r)
 {
-  return hmac_sha256_hex(signing_key(s, r), 32, string_to_sign(s, r));
+  char *sk = signing_key(s, r);
+  char *sts = string_to_sign(s, r);
+  char *sig = hmac_sha256_hex(sk, 32, sts);
+  free(sk);
+  free(sts);
+
+  return sig;
 }
 
 void fcla_sig4_sign(
@@ -350,6 +357,7 @@ void fcla_sig4_sign(
 
   flu_putf(flu_list_to_sm(headers));
 
+  free(req.date);
   free(req.signed_headers);
   free(sig);
 

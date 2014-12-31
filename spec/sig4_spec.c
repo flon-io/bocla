@@ -97,6 +97,10 @@ describe "sig4:"
         "20130524\n"
         "20130524/us-east-1/s3/aws4_request\n"
         "7344ae5b7ee6c3e7e6b0fe0640412a37625d1fbfff95c48bbb2dc43964946972");
+
+      free(ses);
+      flu_list_free_all(req->headers);
+      free(req);
     }
   }
 
