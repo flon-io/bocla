@@ -26,6 +26,8 @@ describe "sig4:"
     flu_list_free_all(headers);
   }
 
+  describe "the signing key"
+  {
 //key = 'wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY'
 //dateStamp = '20120215'
 //regionName = 'us-east-1'
@@ -37,9 +39,7 @@ describe "sig4:"
 //kService = 'f72cfd46f26bc4643f06a11eabb6c0ba18780c19a8da0c31ace671265e3c87fa'
 //kSigning = 'f4780e2d9f65fa895f9c67b32ce1baf0b0d8a43505a000a1a9e090d414db404d'
 
-  describe "the signing key"
-  {
-    it "is generated correctly"
+    it "is generated correctly (1)"
     {
       fcla_sig4_session *ses = calloc(1, sizeof(fcla_sig4_session));
       ses->provider = "aws";
@@ -55,6 +55,35 @@ describe "sig4:"
 
       expect(key ===f ""
         "f4780e2d9f65fa895f9c67b32ce1baf0b0d8a43505a000a1a9e090d414db404d");
+
+      free(ses);
+      free(req);
+    }
+
+//152 241 216 137 254 196 244 66 26 220 82 43 171 12 225 248 46 105 41 194 98 237 21 229 169 76 144 239 209 227 176 231
+    it "is generated correctly (2)"
+    {
+
+      fcla_sig4_session *ses = calloc(1, sizeof(fcla_sig4_session));
+      ses->provider = "aws";
+      ses->provider_u = "AWS";
+      ses->sak = "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY";
+      ses->region = "us-east-1";
+      ses->service = "iam";
+
+      fcla_sig4_request *req = calloc(1, sizeof(fcla_sig4_request));
+      req->date = "20110909";
+
+      unsigned char *k = (unsigned char []){
+        152, 241, 216, 137, 254, 196, 244, 66, 26, 220, 82, 43, 171, 12, 225,
+        248, 46, 105, 41, 194, 98, 237, 21, 229, 169, 76, 144, 239, 209, 227,
+        176, 231 };
+      char *hk = calloc(65, sizeof(char));
+      for (size_t i = 0; i < 32; ++i) sprintf(hk + 2 * i, "%02x", k[i]);
+
+      char *key = fcla_sig4_signing_key(ses, req);
+
+      expect(key ===F hk);
 
       free(ses);
       free(req);
