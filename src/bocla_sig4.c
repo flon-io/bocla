@@ -39,18 +39,6 @@
 #include "bocla_sig4.h"
 
 
-typedef struct {
-  char meth;
-  char *host;
-  char *path;
-  char *query;
-  char *date;
-  flu_dict *headers;
-  char *signed_headers;
-  char *body;
-  size_t bodyl;
-} fcla_sig4_request;
-
 fcla_sig4_session *fcla_sig4_session_init(
   const char *path, const char *service, const char *region)
 {
@@ -99,8 +87,9 @@ void fcla_sig4_session_free(fcla_sig4_session *c)
   free(c);
 }
 
-static char *bin_to_hex(unsigned char *data, size_t len)
+static char *bin_to_hex(unsigned char *data, ssize_t len)
 {
+  if (len < 0) len = strlen(data);
   char *r = calloc(2 * len + 1, sizeof(char));
 
   for (size_t i = 0; i < len; ++i) sprintf(r + 2 * i, "%02x", data[i]);
@@ -264,12 +253,15 @@ static char *string_to_sign(
   return sts;
 }
 
-static char *signing_key(fcla_sig4_session *s, fcla_sig4_request *r)
+char *fcla_sig4_signing_key(fcla_sig4_session *s, fcla_sig4_request *r)
 {
   char *sak = flu_sprintf("%s4%s", s->provider_u, s->sak);
+printf("sak: %s\n", sak);
+printf("ksecret: %s\n", bin_to_hex(sak, -1));
 
   unsigned char *date_key =
     hmac_sha256(sak, -1, r->date);
+printf("date_key: %s\n", bin_to_hex(date_key, 32));
   unsigned char *date_region_key =
     hmac_sha256(date_key, 32, s->region);
   unsigned char *date_region_service_key =
@@ -289,8 +281,10 @@ static char *signing_key(fcla_sig4_session *s, fcla_sig4_request *r)
 
 static char *signature(fcla_sig4_session *s, fcla_sig4_request *r)
 {
-  //return bin_to_hex(hmac_sha256(signing_key(s, r), string_to_sign(s, r)), 32);
-  return hmac_sha256_hex(signing_key(s, r), 32, string_to_sign(s, r));
+  //return bin_to_hex(
+  //  hmac_sha256(signing_key(s, r), string_to_sign(s, r)), 32);
+  return hmac_sha256_hex(
+    fcla_sig4_signing_key(s, r), 32, string_to_sign(s, r));
 }
 
 void fcla_sig4_sign(

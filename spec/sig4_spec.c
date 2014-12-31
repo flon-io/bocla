@@ -26,6 +26,41 @@ describe "sig4:"
     flu_list_free_all(headers);
   }
 
+//key = 'wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY'
+//dateStamp = '20120215'
+//regionName = 'us-east-1'
+//serviceName = 'iam'
+
+//kSecret  = '41575334774a616c725855746e46454d492f4b374d44454e472b62507852666943594558414d504c454b4559'
+//kDate    = '969fbb94feb542b71ede6f87fe4d5fa29c789342b0f407474670f0c2489e0a0d'
+//kRegion  = '69daa0209cd9c5ff5c8ced464a696fd4252e981430b10e3d3fd8e2f197d7a70c'
+//kService = 'f72cfd46f26bc4643f06a11eabb6c0ba18780c19a8da0c31ace671265e3c87fa'
+//kSigning = 'f4780e2d9f65fa895f9c67b32ce1baf0b0d8a43505a000a1a9e090d414db404d'
+
+  describe "fcla_sig4_signing_key()"
+  {
+    it "generates the signing key"
+    {
+      fcla_sig4_session *ses = calloc(1, sizeof(fcla_sig4_session));
+      ses->provider = "aws";
+      ses->provider_u = "AWS";
+      ses->sak = "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY";
+      ses->region = "us-east-1";
+      ses->service = "iam";
+
+      fcla_sig4_request *req = calloc(1, sizeof(fcla_sig4_request));
+      req->date = "20120215";
+
+      char *key = fcla_sig4_signing_key(ses, req);
+
+      expect(key ===f ""
+        "f4780e2d9f65fa895f9c67b32ce1baf0b0d8a43505a000a1a9e090d414db404d");
+
+      free(ses);
+      free(req);
+    }
+  }
+
   describe "fcla_sig4_sign()"
   {
     it "signs a GET request"

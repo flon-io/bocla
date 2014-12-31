@@ -40,6 +40,18 @@ typedef struct {
   char *region;
 } fcla_sig4_session;
 
+typedef struct {
+  char meth;
+  char *host;
+  char *path;
+  char *query;
+  char *date;
+  flu_dict *headers;
+  char *signed_headers;
+  char *body;
+  size_t bodyl;
+} fcla_sig4_request;
+
 fcla_sig4_session *fcla_sig4_session_init(
   const char *path, const char *region, const char *service);
 
@@ -49,6 +61,10 @@ void fcla_sig4_sign(
   fcla_sig4_session *s,
   char meth, char *host, char *path, char *query, flu_dict *headers,
   char *body, size_t bodyl);
+
+/* For specs only.
+ */
+char *fcla_sig4_signing_key(fcla_sig4_session *s, fcla_sig4_request *r);
 
 #endif // FLON_BOCLA_SIG4_H
 
