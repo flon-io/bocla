@@ -11,24 +11,20 @@
 #include "bocla3.h"
 
 
-describe "bocla3"
+describe "bocla3:"
 {
   before each
   {
     fcla3_context *c = calloc(1, sizeof(fcla3_context));
     c->endpoint = rdz_strdup("s3");
 
-    char *credentials = flu_readall("../.aws");
+    flu_dict *d = flu_readdict("../.aws");
+    if (d == NULL) { perror("no ../.aws file"); exit(1); }
 
-    char *a = strstr(credentials, ":") + 1; if (*a == ' ') ++a;
-    char *b = strchr(a, '\n');
-    c->aki = rdz_strndup(a, b - a - 1);
+    c->aki = rdz_strdup(flu_list_get(d, "aki"));
+    c->sak = rdz_strdup(flu_list_get(d, "sak"));
 
-    a = strstr(b, ":") + 1; if (*a == ' ') ++a;
-    b = strchr(a, '\n');
-    c->sak = rdz_strndup(a, b - a - 1);
-
-    free(credentials); credentials = NULL;
+    flu_list_free_all(d);
   }
   after each
   {
