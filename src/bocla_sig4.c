@@ -97,7 +97,7 @@ static char *bin_to_hex(unsigned char *data, size_t len)
   return r;
 }
 
-static char *sha256(void *data, ssize_t len)
+static char *sha256_hex(void *data, ssize_t len)
 {
   if (len < 0) len = strlen(data);
 
@@ -243,7 +243,7 @@ static char *string_to_sign(fcla_sig4_session *s, fcla_sig4_request *r)
 
   char *cr = canonical_request(s, r);
   puts("... canonical_request"); puts(cr); puts("...");
-  flu_sbputs_f(b, sha256(cr, -1));
+  flu_sbputs_f(b, sha256_hex(cr, -1));
   free(cr);
 
   return flu_sbuffer_to_string(b);
@@ -292,7 +292,7 @@ char *fcla_sig4_signing_key(fcla_sig4_session *s, fcla_sig4_request *r)
 
 static char *signature(fcla_sig4_session *s, fcla_sig4_request *r)
 {
-  char *sk = signing_key(s, r);
+  unsigned char *sk = signing_key(s, r);
   char *sts = string_to_sign(s, r);
   puts("*** string_to_sign"); puts(sts); puts("***");
   char *sig = hmac_sha256_hex(sk, 32, sts);
@@ -335,7 +335,7 @@ void fcla_sig4_sign(
   }
 
   flu_list_set(
-    req.headers, "x-%s-content-sha256", s->header, sha256(body, bodyl));
+    req.headers, "x-%s-content-sha256", s->header, sha256_hex(body, bodyl));
 
   req.signed_headers = signed_headers(req.headers);
 
