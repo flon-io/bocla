@@ -85,6 +85,8 @@ void fcla_sig4_session_free(fcla_sig4_session *c)
   free(c->sak);
   free(c->service);
   free(c->region);
+  fcla_response_free(c->last_response);
+
   free(c);
 }
 
@@ -130,6 +132,7 @@ static char *hmac_sha256_hex(void *key, ssize_t klen, char *data)
 static char *canonical_uri(
   fcla_sig4_session *s, fcla_sig4_request *r)
 {
+  if (strcmp(r->path, "") == 0) return strdup("/");
   return strdup(r->path);
 }
 

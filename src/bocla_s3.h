@@ -25,52 +25,16 @@
 
 // https://github.com/flon-io/bocla
 
-// bocla_sig4.h
+// bocla_s3.h
 
-#ifndef FLON_BOCLA_SIG4_H
-#define FLON_BOCLA_SIG4_H
+#ifndef FLON_BOCLA_S3_H
+#define FLON_BOCLA_S3_H
 
-#include "bocla.h"
-
-
-typedef struct {
-  char *provider; // usually "aws"
-  char *provider_u; // uppercase
-  char *header; // "amz" for "x-amz-..."
-  char *aki;
-  char *sak;
-  char *service;
-  char *region;
-  fcla_response *last_response;
-} fcla_sig4_session;
-
-typedef struct {
-  char meth;
-  char *host;
-  char *path;
-  char *query;
-  char *date;
-  flu_dict *headers;
-  char *signed_headers;
-  char *body;
-  size_t bodyl;
-} fcla_sig4_request;
-
-fcla_sig4_session *fcla_sig4_session_init(
-  const char *path, const char *region, const char *service);
-
-void fcla_sig4_session_free(fcla_sig4_session *c);
-
-void fcla_sig4_sign(
-  fcla_sig4_session *s,
-  char meth, char *host, char *path, char *query, flu_dict *headers,
-  char *body, size_t bodyl);
+#include "bocla_sig4.h"
 
 
-// specs only
+flu_list *fcla_s3_list_buckets(fcla_sig4_session *s);
+//char *fcla_s3_read(fcla_sig4_session *s, const char *fname, ...);
 
-char *fcla_sig4_signing_key(fcla_sig4_session *s, fcla_sig4_request *r);
-char *fcla_sig4_string_to_sign(fcla_sig4_session *s, fcla_sig4_request *r);
-
-#endif // FLON_BOCLA_SIG4_H
+#endif // FLON_BOCLA_S3_H
 
