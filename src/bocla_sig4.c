@@ -124,7 +124,7 @@ static unsigned char *hmac_sha256(void *key, ssize_t klen, char *data)
   return HMAC(
     EVP_sha256(),
     key, klen < 0 ? strlen(key) : klen,
-    data, strlen(data),
+    (unsigned char *)data, strlen(data),
     r, NULL);
 }
 
@@ -246,7 +246,7 @@ static char *string_to_sign(fcla_sig4_session *s, fcla_sig4_request *r)
   flu_sbputs(b, s->provider_u);
   flu_sbputs(b, "4-HMAC-256\n");
 
-  flu_sbputs(b, r->date);
+  flu_sbputs(b, flu_list_get(r->headers, "x-%s-date", s->header));
   flu_sbputc(b, '\n');
 
   flu_sbprintf(

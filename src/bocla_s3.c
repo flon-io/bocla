@@ -47,7 +47,7 @@ static fcla_response *request(
 
   flu_list *headers = flu_list_malloc();
 
-  flu_list_set(headers, "_v", strdup("true"));
+  //flu_list_set(headers, "_v", strdup("true"));
 
   fcla_sig4_sign(
     s, meth, host, path, query, headers, NULL, 0);
