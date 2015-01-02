@@ -22,13 +22,13 @@ describe "sig4:"
     return r;
   }
 
-  char *to_int_list(unsigned char *s)
-  {
-    flu_sbuffer *b = flu_sbuffer_malloc();
-    for (size_t i = 0; i < 32; ++i) flu_sbprintf(b, "%i ", s[i]);
-
-    return flu_sbuffer_to_string(b);
-  }
+  //char *to_int_list(unsigned char *s)
+  //{
+  //  flu_sbuffer *b = flu_sbuffer_malloc();
+  //  for (size_t i = 0; i < 32; ++i) flu_sbprintf(b, "%i ", s[i]);
+  //
+  //  return flu_sbuffer_to_string(b);
+  //}
 
   describe "the signing key"
   {
@@ -125,7 +125,7 @@ describe "sig4:"
       req->signed_headers = "host;range;x-amz-content-sha256;x-amz-date";
 
       expect(fcla_sig4_string_to_sign(ses, req) ===f ""
-        "AWS4-HMAC-256\n"
+        "AWS4-HMAC-SHA256\n"
         "20130524T000000Z\n"
         "20130524/us-east-1/s3/aws4_request\n"
         "7344ae5b7ee6c3e7e6b0fe0640412a37625d1fbfff95c48bbb2dc43964946972");

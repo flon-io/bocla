@@ -44,6 +44,11 @@ describe "bocla s3:"
     }
   }
 
+  describe "fcla3_read()"
+  {
+    it "reads a file from S3 and returns it as a char*"
+    it "accepts a bucket name as prefix>"
+  }
 //  describe "fcla3_read()"
 //  {
 //    it "reads a file from S3 and returns it as a char*"
@@ -68,5 +73,16 @@ describe "bocla s3:"
 //      expect(s ===f "flon is a kind of interpreter");
 //    }
 //  }
+
+  describe "fcla_s3_fetch()"
+  {
+    it "reads a file from S3 and writes it to file locally"
+    it "accepts a bucket name as prefix>"
+  }
+
+  describe "fcla_s3_list()"
+  {
+    it "lists the files in the bucket"
+  }
 }
 
