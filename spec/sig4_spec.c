@@ -7,23 +7,27 @@
 
 //#include <string.h>
 
+#include "flutil.h"
 #include "flutim.h"
 #include "bocla_sig4.h"
 
 
 describe "sig4:"
 {
-  before each
+  char *to_hex(unsigned char *s)
   {
-    fcla_sig4_session *s =
-      fcla_sig4_session_init("../spec/.aws_sig4", "s3", "us-east-1");
+    char *r = calloc(65, sizeof(char));
+    for (size_t i = 0; i < 32; ++i) sprintf(r + 2 * i, "%02x", s[i]);
 
-    flu_dict *headers = NULL;
+    return r;
   }
-  after each
+
+  char *to_int_list(unsigned char *s)
   {
-    fcla_sig4_session_free(s);
-    flu_list_free_all(headers);
+    flu_sbuffer *b = flu_sbuffer_malloc();
+    for (size_t i = 0; i < 32; ++i) flu_sbprintf(b, "%i ", s[i]);
+
+    return flu_sbuffer_to_string(b);
   }
 
   describe "the signing key"
@@ -77,8 +81,7 @@ describe "sig4:"
         152, 241, 216, 137, 254, 196, 244, 66, 26, 220, 82, 43, 171, 12, 225,
         248, 46, 105, 41, 194, 98, 237, 21, 229, 169, 76, 144, 239, 209, 227,
         176, 231 };
-      char *hk = calloc(65, sizeof(char));
-      for (size_t i = 0; i < 32; ++i) sprintf(hk + 2 * i, "%02x", k[i]);
+      char *hk = to_hex(k);
 
       char *key = fcla_sig4_signing_key(ses, req);
 
@@ -134,6 +137,19 @@ describe "sig4:"
 
   describe "fcla_sig4_sign()"
   {
+    before each
+    {
+      fcla_sig4_session *s =
+        fcla_sig4_session_init("../spec/.aws_sig4", "s3", "us-east-1");
+
+      flu_dict *headers = NULL;
+    }
+    after each
+    {
+      fcla_sig4_session_free(s);
+      flu_list_free_all(headers);
+    }
+
     it "signs a GET request"
     {
       headers = flu_list_malloc();
