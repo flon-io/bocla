@@ -111,7 +111,7 @@ static char *sha256_hex(void *data, ssize_t len)
 
 static unsigned char *hmac_sha256(void *key, ssize_t klen, char *data)
 {
-  unsigned char *r = calloc(SHA256_DIGEST_LENGTH, sizeof(char));
+  unsigned char *r = calloc(SHA256_DIGEST_LENGTH, sizeof(unsigned char));
 
   return HMAC(
     EVP_sha256(),
