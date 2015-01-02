@@ -1,4 +1,4 @@
 provider: aws
 header: amz
 aki: AKIAIOSFODNN7EXAMPLE
-sak: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+sak: wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY

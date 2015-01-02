@@ -82,6 +82,7 @@ describe "sig4:"
         248, 46, 105, 41, 194, 98, 237, 21, 229, 169, 76, 144, 239, 209, 227,
         176, 231 };
       char *hk = to_hex(k);
+        //98f1d889fec4f4421adc522bab0ce1f82e6929c262ed15e5a94c90efd1e3b0e7
 
       char *key = fcla_sig4_signing_key(ses, req);
 
@@ -178,5 +179,37 @@ describe "sig4:"
         "Signature=f0e8bdb87c964420e857bd35b5d6ed310bd44f0170aba48dd91039c6036bdb41");
     }
   }
+
+//  it "computes the expected hash"
+//  {
+//    char *key = "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY";
+//    char *akey = flu_sprintf("AWS4%s", key);
+//    char *date = NULL;
+//    unsigned char *dk = NULL;
+//
+//    puts("");
+//
+//    date = "20120215";
+//    dk = hmac_sha256(akey, -1, date);
+//
+//    printf("key, date: %s %s\n", key, date);
+//    printf("date_key:  %s\n", to_hex(dk));
+//
+//    puts("");
+//
+//    date = "20110909";
+//    dk = hmac_sha256(akey, -1, date);
+//
+//    printf("key, date: %s %s\n", key, date);
+//    printf("date_key:  %s\n", to_hex(dk));
+//
+//    puts("");
+//
+//    date = "20130524";
+//    dk = hmac_sha256(akey, -1, date);
+//
+//    printf("key, date: %s %s\n", key, date);
+//    printf("date_key:  %s\n", to_hex(dk));
+//  }
 }
 

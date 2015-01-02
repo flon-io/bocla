@@ -99,24 +99,32 @@ static char *bin_to_hex(unsigned char *data, size_t len)
   return r;
 }
 
+//static char *bin_to_ints(unsigned char *data, size_t len)
+//{
+//  flu_sbuffer *b = flu_sbuffer_malloc();
+//  for (size_t i = 0; i < len; ++i) flu_sbprintf(b, "%d ", data[i]);
+//
+//  return flu_sbuffer_to_string(b);
+//}
+
 static char *sha256_hex(void *data, ssize_t len)
 {
   if (len < 0) len = strlen(data);
 
-  unsigned char h[SHA256_DIGEST_LENGTH];
-  SHA256((unsigned char *)data, len, h);
+  unsigned char h[32];
+  SHA256(data, len, h);
 
-  return bin_to_hex(h, SHA256_DIGEST_LENGTH);
+  return bin_to_hex(h, 32);
 }
 
 static unsigned char *hmac_sha256(void *key, ssize_t klen, char *data)
 {
-  unsigned char *r = calloc(SHA256_DIGEST_LENGTH, sizeof(unsigned char));
+  unsigned char *r = calloc(32, sizeof(unsigned char));
 
   return HMAC(
     EVP_sha256(),
     key, klen < 0 ? strlen(key) : klen,
-    (unsigned char *)data, strlen(data),
+    data, strlen(data),
     r, NULL);
 }
 
@@ -255,22 +263,32 @@ static char *string_to_sign(fcla_sig4_session *s, fcla_sig4_request *r)
 unsigned char *signing_key(fcla_sig4_session *s, fcla_sig4_request *r)
 {
   char *sak = flu_sprintf("%s4%s", s->provider_u, s->sak);
-  char *as = flu_sprintf("%s4_request", s->provider);
+  char *req = flu_sprintf("%s4_request", s->provider);
+//printf("}}} sak %s\n", sak);
+//printf("}}} req %s\n", req);
+//printf("}}} r->date %s\n", r->date);
+//printf("}}} region %s\n", s->region);
+//printf("}}} service %s\n", s->service);
 
+//printf(". start:                    %s %s\n", sak, r->date);
   unsigned char *date_key =
     hmac_sha256(sak, -1, r->date);
+//printf(". date_key:                 %s\n", bin_to_hex(date_key, 32));
   unsigned char *date_region_key =
     hmac_sha256(date_key, 32, s->region);
+//printf(". date_region_key:          %s\n", bin_to_hex(date_region_key, 32));
   unsigned char *date_region_service_key =
     hmac_sha256(date_region_key, 32, s->service);
+//printf(". date_region_service_key:  %s\n", bin_to_hex(date_region_service_key, 32));
   unsigned char *signing_key =
-    hmac_sha256(date_region_service_key, 32, as);
+    hmac_sha256(date_region_service_key, 32, req);
+//printf(". signing_key:              %s\n", bin_to_hex(signing_key, 32));
 
   flu_zero_and_free(sak, -1);
   free(date_key);
   free(date_region_key);
   free(date_region_service_key);
-  free(as);
+  free(req);
 
   return signing_key;
 }
@@ -278,8 +296,9 @@ unsigned char *signing_key(fcla_sig4_session *s, fcla_sig4_request *r)
 static char *signature(fcla_sig4_session *s, fcla_sig4_request *r)
 {
   unsigned char *sk = signing_key(s, r);
+printf("}}} sk: %s\n", bin_to_hex(sk, 32));
   char *sts = string_to_sign(s, r);
-  puts("*** string_to_sign"); puts(sts); puts("***");
+puts("*** string_to_sign"); puts(sts); puts("***");
   char *sig = hmac_sha256_hex(sk, 32, sts);
   free(sk);
   free(sts);
