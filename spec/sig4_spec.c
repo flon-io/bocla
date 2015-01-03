@@ -14,22 +14,6 @@
 
 describe "sig4:"
 {
-  char *to_hex(unsigned char *s)
-  {
-    char *r = calloc(65, sizeof(char));
-    for (size_t i = 0; i < 32; ++i) sprintf(r + 2 * i, "%02x", s[i]);
-
-    return r;
-  }
-
-  //char *to_int_list(unsigned char *s)
-  //{
-  //  flu_sbuffer *b = flu_sbuffer_malloc();
-  //  for (size_t i = 0; i < 32; ++i) flu_sbprintf(b, "%i ", s[i]);
-  //
-  //  return flu_sbuffer_to_string(b);
-  //}
-
   describe "the signing key"
   {
 //key = 'wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY'
@@ -81,7 +65,7 @@ describe "sig4:"
         152, 241, 216, 137, 254, 196, 244, 66, 26, 220, 82, 43, 171, 12, 225,
         248, 46, 105, 41, 194, 98, 237, 21, 229, 169, 76, 144, 239, 209, 227,
         176, 231 };
-      char *hk = to_hex(k);
+      char *hk = fcla_bin_to_hex(k, 32);
         //98f1d889fec4f4421adc522bab0ce1f82e6929c262ed15e5a94c90efd1e3b0e7
 
       char *key = fcla_sig4_signing_key(ses, req);

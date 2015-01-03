@@ -90,7 +90,7 @@ void fcla_sig4_session_free(fcla_sig4_session *c)
   free(c);
 }
 
-static char *bin_to_hex(unsigned char *data, size_t len)
+char *fcla_bin_to_hex(unsigned char *data, size_t len)
 {
   char *r = calloc(2 * len + 1, sizeof(char));
 
@@ -122,7 +122,7 @@ static char *sha256_hex(void *data, ssize_t len)
   unsigned char h[32];
   SHA256(data, len, h);
 
-  return bin_to_hex(h, 32);
+  return fcla_bin_to_hex(h, 32);
 }
 
 static unsigned char *hmac_sha256(void *key, ssize_t klen, char *data)
@@ -139,7 +139,7 @@ static unsigned char *hmac_sha256(void *key, ssize_t klen, char *data)
 static char *hmac_sha256_hex(void *key, ssize_t klen, char *data)
 {
   unsigned char *sha = hmac_sha256(key, klen, data);
-  char *hex = bin_to_hex(sha, 32);
+  char *hex = fcla_bin_to_hex(sha, 32);
   free(sha);
 
   return hex;
@@ -294,7 +294,7 @@ unsigned char *signing_key(fcla_sig4_session *s, fcla_sig4_request *r)
 static char *signature(fcla_sig4_session *s, fcla_sig4_request *r)
 {
   unsigned char *sk = signing_key(s, r);
-  //printf("}}} sk: %s\n", bin_to_hex(sk, 32));
+  //printf("}}} sk: %s\n", fcla_bin_to_hex(sk, 32));
   char *sts = string_to_sign(s, r);
   //puts("*** string_to_sign"); puts(sts); puts("***");
   //puts("*** string_to_sign"); puts(bin_to_hexes(sts, strlen(sts))); puts("***");
@@ -377,7 +377,7 @@ char *fcla_sig4_string_to_sign(fcla_sig4_session *s, fcla_sig4_request *r)
 char *fcla_sig4_signing_key(fcla_sig4_session *s, fcla_sig4_request *r)
 {
   unsigned char *sk = signing_key(s, r);
-  char *hsk = bin_to_hex(sk, 32);
+  char *hsk = fcla_bin_to_hex(sk, 32);
   free(sk);
 
   return hsk;

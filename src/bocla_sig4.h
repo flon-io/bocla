@@ -67,6 +67,11 @@ void fcla_sig4_sign(
   char *body, size_t bodyl);
 
 
+// bin_to_x() helpers
+
+char *fcla_bin_to_hex(unsigned char *data, size_t len);
+
+
 // specs only
 
 char *fcla_sig4_signing_key(fcla_sig4_session *s, fcla_sig4_request *r);
