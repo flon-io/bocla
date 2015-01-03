@@ -106,14 +106,14 @@ char *fcla_bin_to_hex(unsigned char *data, size_t len)
 //
 //  return flu_sbuffer_to_string(b);
 //}
-//
-//static char *bin_to_hexes(unsigned char *data, size_t len)
-//{
-//  flu_sbuffer *b = flu_sbuffer_malloc();
-//  for (size_t i = 0; i < len; ++i) flu_sbprintf(b, "%02x ", data[i]);
-//
-//  return flu_sbuffer_to_string(b);
-//}
+
+static char *bin_to_hexes(unsigned char *data, size_t len)
+{
+  flu_sbuffer *b = flu_sbuffer_malloc();
+  for (size_t i = 0; i < len; ++i) flu_sbprintf(b, "%02x ", data[i]);
+
+  return flu_sbuffer_to_string(b);
+}
 
 static char *sha256_hex(void *data, ssize_t len)
 {
@@ -148,7 +148,7 @@ static char *hmac_sha256_hex(void *key, ssize_t klen, char *data)
 static char *canonical_uri(
   fcla_sig4_session *s, fcla_sig4_request *r)
 {
-  if (strcmp(r->path, "") == 0) return strdup("/");
+  if (*r->path != '/') return flu_sprintf("/%s", r->path);
   return strdup(r->path);
 }
 

@@ -15,7 +15,8 @@ describe "bocla s3:"
 {
   before each
   {
-    fcla_sig4_session *s = fcla_sig4_session_init("../.aws", "s3", "us-east-1");
+    fcla_sig4_session *s =
+      fcla_sig4_session_init("../.aws", "s3", "ap-northeast-1");
   }
   after each
   {
@@ -26,6 +27,8 @@ describe "bocla s3:"
   {
     it "lists S3 buckets"
     {
+      free(s->region); s->region = strdup("us-east-1"); // :-(
+
       flu_list *l = fcla_s3_list_buckets(s);
 
       expect(s->last_response->status_code i== 200);
@@ -44,35 +47,26 @@ describe "bocla s3:"
     }
   }
 
-  describe "fcla3_read()"
+  describe "fcla_s3_read()"
   {
     it "reads a file from S3 and returns it as a char*"
-    it "accepts a bucket name as prefix>"
+    {
+      char *data = fcla_s3_read(s, "flon-io", "test0.txt");
+
+      expect(s->last_response != NULL);
+      expect(s->last_response->status_code i== 200);
+      expect(data ===f "flon is a kind of interpreter");
+    }
+
+    it "composes the bucket name and the filename"
+    {
+      char *data = fcla_s3_read(s, "flon-%s", "io", "test%i.txt", 0);
+
+      expect(s->last_response != NULL);
+      expect(s->last_response->status_code i== 200);
+      expect(data ===f "flon is a kind of interpreter");
+    }
   }
-//  describe "fcla3_read()"
-//  {
-//    it "reads a file from S3 and returns it as a char*"
-//    {
-//      c->bucket = rdz_strdup("flon-io");
-//
-//      char *s = fcla3_read(c, "test0.txt");
-//
-//      expect(c->last_response != NULL);
-//      expect(c->last_response->status_code i== 200);
-//      expect(s ===f "flon is a kind of interpreter");
-//    }
-//
-//    it "accepts a bucket name as prefix>"
-//    {
-//      c->bucket = rdz_strdup("flon.io");
-//
-//      char *s = fcla3_read(c, "flon-io>test0.txt");
-//
-//      expect(c->last_response != NULL);
-//      expect(c->last_response->status_code i== 200);
-//      expect(s ===f "flon is a kind of interpreter");
-//    }
-//  }
 
   describe "fcla_s3_fetch()"
   {

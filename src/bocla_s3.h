@@ -34,7 +34,7 @@
 
 
 flu_list *fcla_s3_list_buckets(fcla_sig4_session *s);
-//char *fcla_s3_read(fcla_sig4_session *s, const char *fname, ...);
+char *fcla_s3_read(fcla_sig4_session *s, const char *bucket, ...);
 
 #endif // FLON_BOCLA_S3_H
 
