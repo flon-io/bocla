@@ -107,13 +107,13 @@ char *fcla_bin_to_hex(unsigned char *data, size_t len)
 //  return flu_sbuffer_to_string(b);
 //}
 
-static char *bin_to_hexes(unsigned char *data, size_t len)
-{
-  flu_sbuffer *b = flu_sbuffer_malloc();
-  for (size_t i = 0; i < len; ++i) flu_sbprintf(b, "%02x ", data[i]);
-
-  return flu_sbuffer_to_string(b);
-}
+//static char *bin_to_hexes(unsigned char *data, size_t len)
+//{
+//  flu_sbuffer *b = flu_sbuffer_malloc();
+//  for (size_t i = 0; i < len; ++i) flu_sbprintf(b, "%02x ", data[i]);
+//
+//  return flu_sbuffer_to_string(b);
+//}
 
 static char *sha256_hex(void *data, ssize_t len)
 {

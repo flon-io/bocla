@@ -27,7 +27,7 @@ describe "bocla s3:"
   {
     it "lists S3 buckets"
     {
-      free(s->region); s->region = strdup("us-east-1"); // :-(
+      free(s->region); s->region = rdz_strdup("us-east-1"); // :-(
 
       flu_list *l = fcla_s3_list_buckets(s);
 
