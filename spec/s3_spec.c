@@ -17,6 +17,11 @@ describe "bocla s3:"
   {
     fcla_sig4_session *s =
       fcla_sig4_session_init("../.aws", "s3", "ap-northeast-1");
+
+    if (s == NULL)
+    {
+      printf("\n[0;31m## missing .aws configuration! ##[0;0m\n\n");
+    }
   }
   after each
   {
