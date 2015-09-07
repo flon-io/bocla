@@ -25,9 +25,11 @@ describe "bocla"
 
     expect(res->status_code == -1);
 
+    //printf("res->body >%s<\n", res->body);
     expect(
       strcmp(res->body, "connect() timed out!") == 0 ||
-      strncmp(res->body, "Failed to connect to ", 21) == 0);
+      strncmp(res->body, "Failed to connect to ", 21) == 0 ||
+      strncmp(res->body, "Connection timed out after ", 26) == 0);
     //expect(
     //  res->body === "connect() timed out!" ||
     //  res->body ^== "Failed to connect to ");
