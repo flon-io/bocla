@@ -27,6 +27,13 @@ spec: s
 vspec: s
 	valgrind --leak-check=full -v ./s
 	#valgrind --read-var-info=yes --track-origins=yes --leak-check=full -v ./s
+	#
+	# ignores any undefined value errors, too radical
+	#valgrind --leak-check=full --undef-value-errors=no -v ./s
+	#
+	#valgrind --leak-check=full --gen-suppressions=yes -v ./s
+	#valgrind --leak-check=full --gen-suppressions=all -v ./s
+	#valgrind --leak-check=full --gen-suppressions=all --log-file=out.log -v ./s
 
 tspec: s
 	strace -r ./s
